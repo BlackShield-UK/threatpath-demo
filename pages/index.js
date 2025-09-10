@@ -238,11 +238,24 @@ export default function ThreatPathDemo() {
     const [password, setPassword] = useState('demo123');
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+        <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 border border-gray-200">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">ThreatPath Pro</h1>
-            <p className="text-gray-600 mt-2">Advanced Threat Modeling Platform</p>
+            <div className="flex items-center justify-center mb-6">
+              <div className="bg-black rounded-lg p-4 mr-4">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <div className="text-left">
+                <h1 className="text-2xl font-bold text-black tracking-wide">
+                  BLACK <span className="text-gray-700">SHIELD</span>
+                </h1>
+                <p className="text-sm text-orange-500 font-semibold tracking-wider">INTELLIGENCE & SECURITY</p>
+              </div>
+            </div>
+            <div className="border-t border-gray-200 pt-4">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">ThreatPath Pro</h2>
+              <p className="text-gray-600">Advanced threat modeling and attack path visualization</p>
+            </div>
           </div>
           
           <div className="space-y-4">
@@ -252,7 +265,7 @@ export default function ThreatPathDemo() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
             
@@ -262,20 +275,20 @@ export default function ThreatPathDemo() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
             
             <button
               onClick={() => handleLogin(email, password)}
-              className="w-full bg-blue-600 text-white p-3 rounded-lg font-medium hover:bg-blue-700"
+              className="w-full bg-black text-white p-3 rounded-lg font-medium hover:bg-gray-800 transition-all duration-200 shadow-lg"
             >
               Sign In
             </button>
           </div>
           
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
+          <div className="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
+            <p className="text-sm text-orange-700">
               <strong>Demo:</strong> demo@threatpath.pro / demo123
             </p>
           </div>
@@ -331,7 +344,7 @@ export default function ThreatPathDemo() {
                     <button
                       key={nodeType.type}
                       onClick={() => addNode(nodeType.type, nodeType.label)}
-                      className="p-3 border-2 border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 text-center transition-all"
+                      className="p-3 border-2 border-gray-300 rounded-lg hover:border-orange-400 hover:bg-orange-50 text-center transition-all"
                     >
                       <IconComponent className="w-6 h-6 mx-auto mb-1 text-gray-700" />
                       <div className="text-xs font-medium">{nodeType.label}</div>
@@ -502,11 +515,11 @@ export default function ThreatPathDemo() {
     return (
       <div
         className={`absolute transform -translate-x-1/2 -translate-y-1/2 ${
-          selectedNode?.id === node.id ? 'ring-2 ring-blue-500' : ''
+          selectedNode?.id === node.id ? 'ring-2 ring-orange-500' : ''
         }`}
         style={{ left: node.x, top: node.y }}
       >
-        <div className="bg-white rounded-lg shadow-lg border-2 border-gray-300 hover:border-blue-400 min-w-20 text-center">
+        <div className="bg-white rounded-lg shadow-lg border-2 border-gray-300 hover:border-orange-400 min-w-20 text-center">
           <div 
             className="bg-gray-100 rounded-t-md px-2 py-1 text-xs text-gray-600 font-medium border-b select-none cursor-move"
             onMouseDown={handleMouseDown}
@@ -569,7 +582,7 @@ export default function ThreatPathDemo() {
               type="text"
               value={boundary.name}
               onChange={(e) => updateBoundary({ name: e.target.value })}
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-500"
             />
           </div>
           
@@ -580,7 +593,7 @@ export default function ThreatPathDemo() {
                 type="number"
                 value={boundary.x}
                 onChange={(e) => updateBoundary({ x: parseInt(e.target.value) || 0 })}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -589,7 +602,7 @@ export default function ThreatPathDemo() {
                 type="number"
                 value={boundary.y}
                 onChange={(e) => updateBoundary({ y: parseInt(e.target.value) || 0 })}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -601,7 +614,7 @@ export default function ThreatPathDemo() {
                 type="number"
                 value={boundary.width}
                 onChange={(e) => updateBoundary({ width: parseInt(e.target.value) || 100 })}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -610,7 +623,7 @@ export default function ThreatPathDemo() {
                 type="number"
                 value={boundary.height}
                 onChange={(e) => updateBoundary({ height: parseInt(e.target.value) || 60 })}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -620,7 +633,7 @@ export default function ThreatPathDemo() {
             <select
               value={boundary.color}
               onChange={(e) => updateBoundary({ color: e.target.value })}
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-500"
             >
               <option value="red">Red</option>
               <option value="blue">Blue</option>
@@ -636,7 +649,7 @@ export default function ThreatPathDemo() {
           <div className="flex space-x-2">
             <button
               onClick={addNewBoundary}
-              className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+              className="flex-1 bg-black text-white py-2 rounded hover:bg-gray-800"
             >
               Add New Zone
             </button>
@@ -724,7 +737,7 @@ export default function ThreatPathDemo() {
 
         <div className="mb-4">
           <h4 className="font-medium mb-2 flex items-center">
-            <Plus className="w-4 h-4 mr-1 text-blue-600" />
+            <Plus className="w-4 h-4 mr-1 text-orange-600" />
             Available Controls ({securityControls.filter(c => !(currentNode.controls || []).includes(c)).length}):
           </h4>
           <div className="max-h-40 overflow-y-auto border rounded">
@@ -734,7 +747,7 @@ export default function ThreatPathDemo() {
                 <button
                   key={idx}
                   onClick={() => addControl(control)}
-                  className="block w-full text-left text-sm p-2 hover:bg-blue-50 border-b border-gray-100 transition-colors"
+                  className="block w-full text-left text-sm p-2 hover:bg-orange-50 border-b border-gray-100 transition-colors"
                 >
                   + {control}
                 </button>
@@ -830,36 +843,47 @@ export default function ThreatPathDemo() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="bg-white shadow border-b">
+      <div className="bg-black shadow-lg border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold">ThreatPath Pro</h1>
-              <p className="text-sm text-gray-600">{currentDiagramName} • {currentUser?.name}</p>
+            <div className="flex items-center">
+              <div className="bg-white rounded-lg p-2 mr-4">
+                <Shield className="w-6 h-6 text-black" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white tracking-wide">
+                  BLACK <span className="text-gray-300">SHIELD</span>
+                </h1>
+                <p className="text-xs text-orange-400 font-semibold tracking-wider">INTELLIGENCE & SECURITY</p>
+              </div>
+              <div className="ml-6 pl-6 border-l border-gray-600">
+                <h2 className="text-lg font-semibold text-white">ThreatPath Pro</h2>
+                <p className="text-sm text-gray-400">{currentDiagramName} • {currentUser?.name}</p>
+              </div>
             </div>
             <div className="flex space-x-2">
-              <button onClick={createNewDiagram} className="px-3 py-2 bg-purple-600 text-white rounded text-sm">
+              <button onClick={createNewDiagram} className="px-3 py-2 bg-gray-700 text-white rounded text-sm hover:bg-gray-600 transition-colors">
                 New
               </button>
-              <button onClick={() => setShowSaveDialog(true)} className="px-3 py-2 bg-green-600 text-white rounded text-sm">
+              <button onClick={() => setShowSaveDialog(true)} className="px-3 py-2 bg-green-700 text-white rounded text-sm hover:bg-green-600 transition-colors">
                 Save
               </button>
-              <button onClick={() => setShowLoadDialog(true)} className="px-3 py-2 bg-gray-600 text-white rounded text-sm">
+              <button onClick={() => setShowLoadDialog(true)} className="px-3 py-2 bg-gray-600 text-white rounded text-sm hover:bg-gray-500 transition-colors">
                 Load
               </button>
               <button
                 onClick={() => setCurrentView('diagram')}
-                className={`px-4 py-2 rounded ${currentView === 'diagram' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                className={`px-4 py-2 rounded transition-colors ${currentView === 'diagram' ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
               >
                 Network
               </button>
               <button
                 onClick={() => setCurrentView('attacks')}
-                className={`px-4 py-2 rounded ${currentView === 'attacks' ? 'bg-red-600 text-white' : 'bg-gray-200'}`}
+                className={`px-4 py-2 rounded transition-colors ${currentView === 'attacks' ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
               >
                 Attacks
               </button>
-              <button onClick={() => setIsAuthenticated(false)} className="px-3 py-2 bg-red-600 text-white rounded text-sm">
+              <button onClick={() => setIsAuthenticated(false)} className="px-3 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors">
                 Logout
               </button>
             </div>
@@ -877,7 +901,7 @@ export default function ThreatPathDemo() {
               </div>
               <button
                 onClick={() => setShowNodePalette(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition-colors font-medium"
               >
                 Add Component
               </button>
@@ -916,7 +940,7 @@ export default function ThreatPathDemo() {
                     <p className="text-sm mb-4">Add cloud services, containers, IoT devices and more</p>
                     <button
                       onClick={() => setShowNodePalette(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                      className="px-4 py-2 bg-black text-white rounded"
                     >
                       Add Your First Component
                     </button>
@@ -964,7 +988,7 @@ export default function ThreatPathDemo() {
                   const input = e.target.parentElement.previousElementSibling;
                   saveDiagram(input.value || 'Untitled Diagram');
                 }}
-                className="flex-1 bg-blue-600 text-white py-2 rounded"
+                className="flex-1 bg-black text-white py-2 rounded"
               >
                 Save
               </button>
@@ -991,7 +1015,7 @@ export default function ThreatPathDemo() {
                   </div>
                   <button
                     onClick={() => loadDiagram(diagram)}
-                    className="bg-blue-600 text-white px-4 py-1 rounded text-sm"
+                    className="bg-black text-white px-4 py-1 rounded text-sm"
                   >
                     Load
                   </button>
