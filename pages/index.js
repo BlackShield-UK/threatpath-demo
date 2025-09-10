@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { 
   Shield, 
   Server, 
@@ -33,6 +33,9 @@ export default function ThreatPathDemo() {
   const [currentView, setCurrentView] = useState('diagram');
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedThreatActor, setSelectedThreatActor] = useState('apt29');
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [showNodePalette, setShowNodePalette] = useState(false);
   
   const [nodes, setNodes] = useState([
     { id: 1, type: 'internet', x: 50, y: 100, label: 'Internet', controls: [] },
@@ -48,6 +51,20 @@ export default function ThreatPathDemo() {
     { id: 11, type: 'mobile', x: 50, y: 200, label: 'Mobile Devices', controls: ['MDM'] },
     { id: 12, type: 'iot', x: 750, y: 200, label: 'IoT Sensors', controls: [] },
     { id: 13, type: 'container', x: 800, y: 100, label: 'Kubernetes', controls: ['Pod Security'] }
+  ]);
+  
+  const [connections, setConnections] = useState([
+    { from: 2, to: 3 },
+    { from: 3, to: 4 },
+    { from: 2, to: 5 },
+    { from: 5, to: 6 },
+    { from: 6, to: 7 },
+    { from: 6, to: 8 },
+    { from: 4, to: 9 },
+    { from: 9, to: 10 },
+    { from: 9, to: 13 },
+    { from: 11, to: 5 },
+    { from: 8, to: 12 }
   ]);
   
   const threatActors = {
@@ -137,44 +154,144 @@ export default function ThreatPathDemo() {
     storage: HardDrive
   };
 
-  // Mock user login
+  // Handle mouse events globally
+  useEffect(() => {
+    const handleMouseUp = () => setIsDragging(false);
+    const handleMouseMove = (e) => {
+      if (isDragging) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isDragging]);
+
   const handleLogin = (email, password) => {
-    setCurrentUser({ 
-      name: email.split('@')[0], 
-      email: email,
-      company: 'Demo Corp'
-    });
-    setIsAuthenticated(true);
-    if (typeof window !== 'undefined') {
-      const saved = JSON.parse(localStorage.getItem('threatpath_diagrams') || '[]');
-      setSavedDiagrams(saved);
+    try {
+      setCurrentUser({ 
+        name: email.split('@')[0], 
+        email: email,
+        company: 'Demo Corp'
+      });
+      setIsAuthenticated(true);
+      
+      if (typeof window !== 'undefined') {
+        try {
+          const saved = JSON.parse(localStorage.getItem('threatpath_diagrams') || '[]');
+          setSavedDiagrams(saved);
+        } catch (error) {
+          console.warn('Could not load saved diagrams:', error);
+          setSavedDiagrams([]);
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    }
+  };
+  
+  const createNewDiagram = () => {
+    setNodes([]);
+    setConnections([]);
+    setCurrentDiagramName('New Network Diagram');
+    setSelectedNode(null);
+  };
+  
+  const addNode = (nodeType, label) => {
+    const newNode = {
+      id: Date.now(),
+      type: nodeType,
+      x: 400 + Math.random() * 200,
+      y: 150 + Math.random() * 100,
+      label: label,
+      controls: []
+    };
+    setNodes(prev => [...prev, newNode]);
+    setShowNodePalette(false);
+  };
+  
+  const deleteNode = (nodeId) => {
+    setNodes(prev => prev.filter(n => n.id !== nodeId));
+    setConnections(prev => prev.filter(c => c.from !== nodeId && c.to !== nodeId));
+    setSelectedNode(null);
+  };
+  
+  const handleNodeDrag = useCallback((node, event) => {
+    if (!isDragging) return;
+    
+    try {
+      const rect = event.currentTarget.parentElement.getBoundingClientRect();
+      const newX = event.clientX - rect.left - dragOffset.x;
+      const newY = event.clientY - rect.top - dragOffset.y;
+      
+      setNodes(prev => prev.map(n => 
+        n.id === node.id 
+          ? { ...n, x: Math.max(50, Math.min(850, newX)), y: Math.max(50, Math.min(350, newY)) }
+          : n
+      ));
+    } catch (error) {
+      console.warn('Drag error:', error);
+    }
+  }, [isDragging, dragOffset]);
+  
+  const startDrag = (node, event) => {
+    try {
+      setIsDragging(true);
+      const rect = event.currentTarget.parentElement.getBoundingClientRect();
+      setDragOffset({
+        x: event.clientX - rect.left - node.x,
+        y: event.clientY - rect.top - node.y
+      });
+    } catch (error) {
+      console.warn('Start drag error:', error);
     }
   };
   
   const saveDiagram = (name) => {
-    const diagram = {
-      id: Date.now(),
-      name: name,
-      nodes: nodes,
-      threatActor: selectedThreatActor,
-      createdAt: new Date().toISOString(),
-      user: currentUser.email
-    };
-    
-    const updated = [...savedDiagrams, diagram];
-    setSavedDiagrams(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('threatpath_diagrams', JSON.stringify(updated));
+    try {
+      const diagram = {
+        id: Date.now(),
+        name: name,
+        nodes: nodes,
+        connections: connections,
+        threatActor: selectedThreatActor,
+        createdAt: new Date().toISOString(),
+        user: currentUser?.email || 'unknown'
+      };
+      
+      const updated = [...savedDiagrams, diagram];
+      setSavedDiagrams(updated);
+      
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('threatpath_diagrams', JSON.stringify(updated));
+        } catch (error) {
+          console.warn('Could not save diagram:', error);
+        }
+      }
+      
+      setCurrentDiagramName(name);
+      setShowSaveDialog(false);
+    } catch (error) {
+      console.error('Save diagram error:', error);
     }
-    setCurrentDiagramName(name);
-    setShowSaveDialog(false);
   };
   
   const loadDiagram = (diagram) => {
-    setNodes(diagram.nodes);
-    setSelectedThreatActor(diagram.threatActor);
-    setCurrentDiagramName(diagram.name);
-    setShowLoadDialog(false);
+    try {
+      setNodes(diagram.nodes || []);
+      setConnections(diagram.connections || []);
+      setSelectedThreatActor(diagram.threatActor || 'apt29');
+      setCurrentDiagramName(diagram.name || 'Untitled');
+      setShowLoadDialog(false);
+    } catch (error) {
+      console.error('Load diagram error:', error);
+    }
   };
 
   const LoginForm = () => {
@@ -312,21 +429,84 @@ export default function ThreatPathDemo() {
     );
   };
 
+  const NodePalette = () => {
+    const nodeTypes = [
+      { type: 'server', label: 'Server', icon: Server },
+      { type: 'firewall', label: 'Firewall', icon: Shield },
+      { type: 'database', label: 'Database', icon: Database },
+      { type: 'cloud-aws', label: 'AWS Cloud', icon: Cloud },
+      { type: 'endpoint', label: 'Workstation', icon: Laptop },
+      { type: 'mobile', label: 'Mobile Device', icon: Smartphone },
+      { type: 'network', label: 'Network', icon: Wifi },
+      { type: 'iot', label: 'IoT Device', icon: Router },
+      { type: 'container', label: 'Container', icon: Container },
+      { type: 'internet', label: 'Internet', icon: Globe }
+    ];
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Add Network Component</h3>
+            <button onClick={() => setShowNodePalette(false)} className="text-gray-500 hover:text-gray-700">×</button>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {nodeTypes.map((nodeType) => {
+              const IconComponent = nodeType.icon;
+              return (
+                <button
+                  key={nodeType.type}
+                  onClick={() => addNode(nodeType.type, nodeType.label)}
+                  className="p-4 border-2 border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all text-center"
+                >
+                  <IconComponent className="w-8 h-8 mx-auto mb-2 text-gray-700" />
+                  <div className="text-sm font-medium">{nodeType.label}</div>
+                </button>
+              );
+            })}
+          </div>
+          
+          <div className="mt-4">
+            <button
+              onClick={() => setShowNodePalette(false)}
+              className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const NodeComponent = ({ node, isSelected, onClick }) => {
     const IconComponent = nodeIcons[node.type] || Server;
     
+    const handleMouseDown = (e) => {
+      e.preventDefault();
+      startDrag(node, e);
+    };
+    
+    const handleClick = (e) => {
+      if (!isDragging) {
+        onClick(node);
+      }
+    };
+    
     return (
       <div
-        className={`absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 ${
+        className={`absolute cursor-move transform -translate-x-1/2 -translate-y-1/2 select-none ${
           isSelected ? 'ring-2 ring-blue-500' : ''
         }`}
         style={{ left: node.x, top: node.y }}
-        onClick={() => onClick(node)}
+        onMouseDown={handleMouseDown}
+        onClick={handleClick}
       >
         <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-300 hover:border-blue-400 min-w-24 text-center">
           <IconComponent className="w-6 h-6 mx-auto mb-1 text-gray-700" />
           <div className="text-xs font-medium text-gray-800">{node.label}</div>
-          {node.controls.length > 0 && (
+          {node.controls && node.controls.length > 0 && (
             <div className="flex justify-center mt-1">
               <Lock className="w-3 h-3 text-green-600" />
             </div>
@@ -349,17 +529,17 @@ export default function ThreatPathDemo() {
     ];
 
     const addControl = (control) => {
-      setNodes(nodes.map(n => 
+      setNodes(prev => prev.map(n => 
         n.id === node.id 
-          ? { ...n, controls: [...n.controls, control] }
+          ? { ...n, controls: [...(n.controls || []), control] }
           : n
       ));
     };
 
     const removeControl = (control) => {
-      setNodes(nodes.map(n => 
+      setNodes(prev => prev.map(n => 
         n.id === node.id 
-          ? { ...n, controls: n.controls.filter(c => c !== control) }
+          ? { ...n, controls: (n.controls || []).filter(c => c !== control) }
           : n
       ));
     };
@@ -374,7 +554,7 @@ export default function ThreatPathDemo() {
         <div className="mb-4">
           <h4 className="font-medium mb-2">Active Controls:</h4>
           <div className="space-y-1">
-            {node.controls.map((control, idx) => (
+            {(node.controls || []).map((control, idx) => (
               <div key={idx} className="flex justify-between items-center bg-green-50 p-2 rounded">
                 <span className="text-sm">{control}</span>
                 <button 
@@ -388,11 +568,11 @@ export default function ThreatPathDemo() {
           </div>
         </div>
 
-        <div>
+        <div className="mb-4">
           <h4 className="font-medium mb-2">Available Controls:</h4>
           <div className="grid grid-cols-1 gap-1 max-h-32 overflow-y-auto">
             {securityControls
-              .filter(control => !node.controls.includes(control))
+              .filter(control => !(node.controls || []).includes(control))
               .map((control, idx) => (
                 <button
                   key={idx}
@@ -404,6 +584,15 @@ export default function ThreatPathDemo() {
               ))
             }
           </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <button
+            onClick={() => deleteNode(node.id)}
+            className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
+          >
+            Delete Node
+          </button>
         </div>
       </div>
     );
@@ -468,9 +657,9 @@ export default function ThreatPathDemo() {
                   <div key={idx} className="mb-4 p-4 bg-gray-50 rounded-lg border">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center">
-                        <span className="font-medium">{fromNode?.label}</span>
+                        <span className="font-medium">{fromNode?.label || 'Unknown'}</span>
                         <ArrowRight className="w-4 h-4 mx-2" />
-                        <span className="font-medium">{toNode?.label}</span>
+                        <span className="font-medium">{toNode?.label || 'Unknown'}</span>
                       </div>
                       <span className={`px-3 py-1 text-xs rounded-full font-medium ${
                         step.risk === 'high' 
@@ -488,16 +677,16 @@ export default function ThreatPathDemo() {
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="text-xs font-medium text-gray-500">Mitigations: </span>
-                          {toNode?.controls.length > 0 ? (
+                          {toNode?.controls?.length > 0 ? (
                             <span className="text-xs text-green-600 font-medium">{toNode.controls.join(', ')}</span>
                           ) : (
                             <span className="text-xs text-red-600 font-medium">No controls detected</span>
                           )}
                         </div>
                         <div className={`text-xs px-2 py-1 rounded ${
-                          toNode?.controls.length > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          toNode?.controls?.length > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                         }`}>
-                          {toNode?.controls.length > 0 ? 'Protected' : 'Vulnerable'}
+                          {toNode?.controls?.length > 0 ? 'Protected' : 'Vulnerable'}
                         </div>
                       </div>
                     </div>
@@ -563,10 +752,17 @@ export default function ThreatPathDemo() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">ThreatPath Pro</h1>
               <p className="text-sm text-gray-600">
-                {currentDiagramName} • Welcome, {currentUser.name}
+                {currentDiagramName} • Welcome, {currentUser?.name || 'User'}
               </p>
             </div>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={() => createNewDiagram()}
+                className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 flex items-center"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                New
+              </button>
               <button
                 onClick={() => setShowSaveDialog(true)}
                 className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 flex items-center"
@@ -620,24 +816,50 @@ export default function ThreatPathDemo() {
       <div className="max-w-7xl mx-auto p-6">
         {currentView === 'diagram' && (
           <div className="bg-white rounded-lg shadow-lg">
-            <div className="p-4 border-b">
-              <h2 className="text-xl font-semibold">Network Architecture</h2>
-              <p className="text-gray-600">Click on nodes to configure security controls</p>
+            <div className="p-4 border-b flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-semibold">Network Architecture</h2>
+                <p className="text-gray-600">Drag nodes to reposition • Click to configure controls</p>
+              </div>
+              <button
+                onClick={() => setShowNodePalette(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Component
+              </button>
             </div>
             
-            <div className="relative h-96 bg-gray-50 overflow-x-auto">
+            <div 
+              className="relative h-96 bg-gray-50 overflow-x-auto"
+              onMouseMove={(e) => {
+                if (isDragging) {
+                  // Handle global mouse move for dragging
+                  const draggedNode = nodes.find(n => selectedNode?.id === n.id);
+                  if (draggedNode) {
+                    handleNodeDrag(draggedNode, e);
+                  }
+                }
+              }}
+            >
               <svg className="absolute inset-0 w-full h-full pointer-events-none min-w-[900px]">
-                <line x1="200" y1="100" x2="350" y2="100" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="350" y1="100" x2="500" y2="50" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="200" y1="200" x2="350" y2="200" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="350" y1="200" x2="500" y2="200" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="500" y1="200" x2="650" y2="200" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="200" y1="100" x2="200" y2="200" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="500" y1="50" x2="700" y2="50" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="700" y1="50" x2="650" y2="120" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="700" y1="50" x2="800" y2="100" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="50" y1="200" x2="200" y2="200" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
-                <line x1="650" y1="200" x2="750" y2="200" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3,3" />
+                {connections.map((conn, idx) => {
+                  const fromNode = nodes.find(n => n.id === conn.from);
+                  const toNode = nodes.find(n => n.id === conn.to);
+                  if (!fromNode || !toNode) return null;
+                  
+                  return (
+                    <line
+                      key={idx}
+                      x1={fromNode.x}
+                      y1={fromNode.y}
+                      x2={toNode.x}
+                      y2={toNode.y}
+                      stroke="#94a3b8"
+                      strokeWidth="2"
+                    />
+                  );
+                })}
               </svg>
               
               {nodes.map(node => (
@@ -649,14 +871,21 @@ export default function ThreatPathDemo() {
                 />
               ))}
               
-              <div className="absolute border-2 border-dashed border-red-400 bg-red-50 bg-opacity-30 rounded"
-                   style={{ left: 150, top: 170, width: 520, height: 60 }}>
-                <span className="absolute -top-6 left-2 text-xs font-medium text-red-600">Internal Network</span>
-              </div>
-              <div className="absolute border-2 border-dashed border-blue-400 bg-blue-50 bg-opacity-30 rounded"
-                   style={{ left: 680, top: 30, width: 140, height: 120 }}>
-                <span className="absolute -top-6 left-2 text-xs font-medium text-blue-600">Cloud Infrastructure</span>
-              </div>
+              {nodes.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <Monitor className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-lg font-medium mb-2">No Network Components</h3>
+                    <p className="text-sm mb-4">Click "Add Component" to start building your network diagram</p>
+                    <button
+                      onClick={() => setShowNodePalette(true)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Add Your First Component
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
