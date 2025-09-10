@@ -235,20 +235,72 @@ export default function ThreatPathDemo() {
   const NodeComponent = ({ node }) => {
     const IconComponent = nodeIcons[node.type] || Server;
     
+    const handleMouseDown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startNodeX = node.x;
+      const startNodeY = node.y;
+      
+      let hasMoved = false;
+      
+      const handleMouseMove = (moveEvent) => {
+        hasMoved = true;
+        const deltaX = moveEvent.clientX - startX;
+        const deltaY = moveEvent.clientY - startY;
+        
+        const newX = startNodeX + deltaX;
+        const newY = startNodeY + deltaY;
+        
+        setNodes(prevNodes => prevNodes.map(n => 
+          n.id === node.id 
+            ? { 
+                ...n, 
+                x: Math.max(25, Math.min(775, newX)), 
+                y: Math.max(25, Math.min(375, newY)) 
+              }
+            : n
+        ));
+      };
+      
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        
+        // If we didn't move, treat it as a click
+        if (!hasMoved) {
+          setSelectedNode(node);
+        }
+      };
+      
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    };
+    
     return (
       <div
-        className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer ${
+        className={`absolute transform -translate-x-1/2 -translate-y-1/2 ${
           selectedNode?.id === node.id ? 'ring-2 ring-blue-500' : ''
         }`}
         style={{ left: node.x, top: node.y }}
-        onClick={() => setSelectedNode(node)}
       >
-        <div className="bg-white rounded-lg shadow-lg p-3 border-2 border-gray-300 hover:border-blue-400 min-w-20 text-center">
-          <IconComponent className="w-6 h-6 mx-auto mb-1 text-gray-700" />
-          <div className="text-xs font-medium">{node.label}</div>
-          {node.controls?.length > 0 && (
-            <Lock className="w-3 h-3 mx-auto mt-1 text-green-600" />
-          )}
+        <div className="bg-white rounded-lg shadow-lg border-2 border-gray-300 hover:border-blue-400 min-w-20 text-center">
+          {/* Drag handle at the top */}
+          <div 
+            className="bg-gray-100 rounded-t-md px-2 py-1 text-xs text-gray-600 font-medium border-b select-none cursor-move"
+            onMouseDown={handleMouseDown}
+          >
+            ⋮⋮ {node.label}
+          </div>
+          
+          <div className="p-2">
+            <IconComponent className="w-6 h-6 mx-auto mb-1 text-gray-700" />
+            {node.controls?.length > 0 && (
+              <Lock className="w-3 h-3 mx-auto text-green-600" />
+            )}
+          </div>
         </div>
       </div>
     );
@@ -446,7 +498,7 @@ export default function ThreatPathDemo() {
             <div className="p-4 border-b flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-semibold">Network Architecture</h2>
-                <p className="text-gray-600">Click nodes to configure • Drag to reposition</p>
+                <p className="text-gray-600">Drag the gray bars to move nodes • Click icons to configure</p>
               </div>
               <button
                 onClick={() => setShowNodePalette(true)}
