@@ -57,10 +57,12 @@ export default function ThreatPathDemo() {
       description: "Chinese military unit",
       attackPaths: [{
         id: 2,
-        name: "Phishing → Lateral Movement",
+        name: "IoT → Network Pivot → Cloud Compromise",
         steps: [
-          { from: 1, to: 5, ttp: "T1566: Phishing", risk: "high", description: "Email attack" },
-          { from: 5, to: 4, ttp: "T1021: Remote Services", risk: "medium", description: "Move to database" }
+          { from: 9, to: 5, ttp: "T1200: Hardware Additions", risk: "medium", description: "Compromise IoT device" },
+          { from: 5, to: 3, ttp: "T1021: Remote Services", risk: "medium", description: "Lateral movement to servers" },
+          { from: 3, to: 6, ttp: "T1078.004: Cloud Accounts", risk: "high", description: "Abuse cloud credentials" },
+          { from: 6, to: 10, ttp: "T1530: Data from Cloud Storage", risk: "high", description: "Access cloud storage" }
         ]
       }]
     }
