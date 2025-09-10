@@ -1015,4 +1015,307 @@ export default function ThreatPathDemo() {
         
         <div className="mb-4">
           <h4 className="font-medium mb-2 flex items-center">
-            <Lock className="w-
+            <Lock className="w-4 h-4 mr-1 text-green-600" />
+            Active Controls ({(currentNode.controls || []).length}):
+          </h4>
+          {(currentNode.controls || []).length === 0 ? (
+            <p className="text-sm text-gray-500 italic bg-gray-50 p-3 rounded">No security controls configured</p>
+          ) : (
+            <div className="max-h-32 overflow-y-auto">
+              {(currentNode.controls || []).map((control, idx) => (
+                <div key={idx} className="flex justify-between items-center bg-green-50 p-2 rounded mb-1 border border-green-200">
+                  <span className="text-sm font-medium text-green-800">{control}</span>
+                  <button onClick={() => removeControl(control)} className="text-red-500 text-xs hover:text-red-700 px-2 py-1 rounded">
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <h4 className="font-medium mb-2 flex items-center">
+            <Plus className="w-4 h-4 mr-1 text-blue-600" />
+            Available Controls ({securityControls.filter(c => !(currentNode.controls || []).includes(c)).length}):
+          </h4>
+          <div className="max-h-40 overflow-y-auto border rounded">
+            {securityControls
+              .filter(c => !(currentNode.controls || []).includes(c))
+              .map((control, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => addControl(control)}
+                  className="block w-full text-left text-sm p-2 hover:bg-blue-50 border-b border-gray-100 transition-colors"
+                >
+                  + {control}
+                </button>
+              ))}
+          </div>
+          {securityControls.filter(c => !(currentNode.controls || []).includes(c)).length === 0 && (
+            <p className="text-sm text-gray-500 italic bg-gray-50 p-3 rounded">All available controls have been added</p>
+          )}
+        </div>
+
+        <button
+          onClick={() => deleteNode(currentNode.id)}
+          className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 flex items-center justify-center"
+        >
+          <AlertTriangle className="w-4 h-4 mr-2" />
+          Delete Node
+        </button>
+      </div>
+    );
+  };
+
+  const AttackPathView = () => {
+    const currentThreatActor = threatActors[selectedThreatActor];
+    
+    return (
+      <div className="p-6">
+        <h2 className="text-2xl font-bold mb-6">Attack Path Analysis</h2>
+        
+        <div className="mb-6 bg-white rounded-lg border p-4">
+          <h3 className="font-semibold mb-3">Select Threat Actor</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {Object.entries(threatActors).map(([key, actor]) => (
+              <button
+                key={key}
+                onClick={() => setSelectedThreatActor(key)}
+                className={`p-3 rounded border-2 text-left ${
+                  selectedThreatActor === key ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                }`}
+              >
+                <div className="font-medium text-sm">{actor.name}</div>
+                <div className="text-xs text-gray-600">{actor.description}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        {currentThreatActor.attackPaths.map(path => (
+          <div key={path.id} className="bg-white rounded-lg border p-4">
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <Target className="w-5 h-5 mr-2 text-red-600" />
+              {path.name}
+            </h3>
+            
+            {path.steps.map((step, idx) => {
+              const fromNode = nodes.find(n => n.id === step.from);
+              const toNode = nodes.find(n => n.id === step.to);
+              
+              return (
+                <div key={idx} className="mb-4 p-3 bg-gray-50 rounded border">
+                  <div className="flex items-center mb-2">
+                    <span className="font-medium">{fromNode?.label || 'Unknown'}</span>
+                    <ArrowRight className="w-4 h-4 mx-2" />
+                    <span className="font-medium">{toNode?.label || 'Unknown'}</span>
+                    <span className={`ml-auto px-2 py-1 text-xs rounded ${
+                      step.risk === 'high' ? 'bg-red-200 text-red-800' : 'bg-yellow-200 text-yellow-800'
+                    }`}>
+                      {step.risk.toUpperCase()} RISK
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600 mb-1">{step.ttp}</div>
+                  <div className="text-sm text-gray-500">{step.description}</div>
+                  
+                  <div className="mt-2 text-xs">
+                    <span className="font-medium">Mitigations: </span>
+                    {toNode?.controls?.length > 0 ? (
+                      <span className="text-green-600">{toNode.controls.join(', ')}</span>
+                    ) : (
+                      <span className="text-red-600">No controls detected</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  if (!isAuthenticated) {
+    return <LoginForm />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="bg-white shadow border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold">ThreatPath Pro</h1>
+              <p className="text-sm text-gray-600">{currentDiagramName} • {currentUser?.name}</p>
+            </div>
+            <div className="flex space-x-2">
+              <button onClick={createNewDiagram} className="px-3 py-2 bg-purple-600 text-white rounded text-sm">
+                New
+              </button>
+              <button onClick={() => setShowSaveDialog(true)} className="px-3 py-2 bg-green-600 text-white rounded text-sm">
+                Save
+              </button>
+              <button onClick={() => setShowLoadDialog(true)} className="px-3 py-2 bg-gray-600 text-white rounded text-sm">
+                Load
+              </button>
+              <button
+                onClick={() => setCurrentView('diagram')}
+                className={`px-4 py-2 rounded ${currentView === 'diagram' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+              >
+                Network
+              </button>
+              <button
+                onClick={() => setCurrentView('attacks')}
+                className={`px-4 py-2 rounded ${currentView === 'attacks' ? 'bg-red-600 text-white' : 'bg-gray-200'}`}
+              >
+                Attacks
+              </button>
+              <button onClick={() => setIsAuthenticated(false)} className="px-3 py-2 bg-red-600 text-white rounded text-sm">
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6">
+        {currentView === 'diagram' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-4 border-b flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-semibold">Advanced Network Architecture</h2>
+                <p className="text-gray-600">Drag nodes/boundaries • Click to configure • Interactive trust zones</p>
+              </div>
+              <button
+                onClick={() => setShowNodePalette(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Add Component
+              </button>
+            </div>
+            
+            <div className="relative h-96 bg-gray-50 diagram-area"
+                 onClick={() => {
+                   setSelectedNode(null);
+                   setSelectedBoundary(null);
+                 }}>
+              
+              {boundaries.map(boundary => (
+                <BoundaryComponent key={boundary.id} boundary={boundary} />
+              ))}
+              
+              <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                <line x1="150" y1="100" x2="200" y2="100" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="300" y1="100" x2="350" y2="100" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="450" y1="100" x2="500" y2="100" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="450" y1="100" x2="650" y2="80" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="280" y1="130" x2="280" y2="180" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="700" y1="80" x2="750" y2="130" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="700" y1="80" x2="650" y2="180" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="200" y1="230" x2="250" y2="180" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3,3" />
+              </svg>
+
+              {nodes.map(node => (
+                <NodeComponent key={node.id} node={node} />
+              ))}
+              
+              {nodes.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <Monitor className="w-16 h-16 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Components</h3>
+                    <p className="text-sm mb-4">Add cloud services, containers, IoT devices and more</p>
+                    <button
+                      onClick={() => setShowNodePalette(true)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                    >
+                      Add Your First Component
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {currentView === 'attacks' && <AttackPathView />}
+      </div>
+
+      {showNodePalette && <NodePalette />}
+      
+      {selectedNode && currentView === 'diagram' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="max-w-lg w-full mx-4">
+            <ControlsPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
+          </div>
+        </div>
+      )}
+
+      {selectedBoundary && currentView === 'diagram' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="max-w-md w-full mx-4">
+            <BoundaryControlsPanel boundary={selectedBoundary} onClose={() => setSelectedBoundary(null)} />
+          </div>
+        </div>
+      )}
+
+      {showSaveDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Save Diagram</h3>
+            <input
+              type="text"
+              placeholder="Diagram name"
+              className="w-full p-2 border rounded mb-4"
+              onKeyPress={(e) => e.key === 'Enter' && saveDiagram(e.target.value)}
+            />
+            <div className="flex space-x-2">
+              <button 
+                onClick={(e) => {
+                  const input = e.target.parentElement.previousElementSibling;
+                  saveDiagram(input.value || 'Untitled Diagram');
+                }}
+                className="flex-1 bg-blue-600 text-white py-2 rounded"
+              >
+                Save
+              </button>
+              <button onClick={() => setShowSaveDialog(false)} className="flex-1 bg-gray-300 py-2 rounded">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLoadDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Load Diagram</h3>
+            {savedDiagrams.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No saved diagrams</p>
+            ) : (
+              savedDiagrams.map((diagram) => (
+                <div key={diagram.id} className="flex justify-between items-center p-3 border rounded mb-2">
+                  <div>
+                    <div className="font-medium">{diagram.name}</div>
+                    <div className="text-sm text-gray-500">{new Date(diagram.createdAt).toLocaleDateString()}</div>
+                  </div>
+                  <button
+                    onClick={() => loadDiagram(diagram)}
+                    className="bg-blue-600 text-white px-4 py-1 rounded text-sm"
+                  >
+                    Load
+                  </button>
+                </div>
+              ))
+            )}
+            <button onClick={() => setShowLoadDialog(false)} className="w-full bg-gray-300 py-2 rounded mt-4">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
