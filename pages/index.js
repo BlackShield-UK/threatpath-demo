@@ -45,7 +45,7 @@ export default function ThreatPathDemo() {
       id: 'internal',
       name: '🔒 Internal Network Zone',
       x: 200,
-      y: 180,
+      y: 250,
       width: 400,
       height: 120,
       color: 'red'
@@ -54,7 +54,7 @@ export default function ThreatPathDemo() {
       id: 'cloud',
       name: '☁️ Cloud Infrastructure',
       x: 650,
-      y: 30,
+      y: 50,
       width: 200,
       height: 140,
       color: 'blue'
@@ -63,7 +63,7 @@ export default function ThreatPathDemo() {
       id: 'devices',
       name: '📱 End User Devices',
       x: 100,
-      y: 230,
+      y: 400,
       width: 350,
       height: 80,
       color: 'green'
