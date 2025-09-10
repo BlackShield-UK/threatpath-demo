@@ -258,49 +258,71 @@ export default function ThreatPathDemo() {
     const controls = ['Firewall Rules', 'IPS', 'WAF', 'Endpoint Protection', 'MFA', 'Encryption'];
 
     const addControl = (control) => {
-      setNodes(nodes.map(n => 
+      const updatedNodes = nodes.map(n => 
         n.id === node.id ? { ...n, controls: [...(n.controls || []), control] } : n
-      ));
+      );
+      setNodes(updatedNodes);
+      
+      // Update the selected node immediately so the panel reflects changes
+      const updatedNode = updatedNodes.find(n => n.id === node.id);
+      setSelectedNode(updatedNode);
     };
 
     const removeControl = (control) => {
-      setNodes(nodes.map(n => 
+      const updatedNodes = nodes.map(n => 
         n.id === node.id ? { ...n, controls: (n.controls || []).filter(c => c !== control) } : n
-      ));
+      );
+      setNodes(updatedNodes);
+      
+      // Update the selected node immediately so the panel reflects changes
+      const updatedNode = updatedNodes.find(n => n.id === node.id);
+      setSelectedNode(updatedNode);
     };
+
+    // Use the current selectedNode to ensure we show the latest state
+    const currentNode = nodes.find(n => n.id === node.id) || node;
 
     return (
       <div className="bg-white rounded-lg shadow-xl p-6 border">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">{node.label}</h3>
+          <h3 className="text-lg font-semibold">{currentNode.label}</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">×</button>
         </div>
         
         <div className="mb-4">
           <h4 className="font-medium mb-2">Active Controls:</h4>
-          {(node.controls || []).map((control, idx) => (
-            <div key={idx} className="flex justify-between items-center bg-green-50 p-2 rounded mb-1">
-              <span className="text-sm">{control}</span>
-              <button onClick={() => removeControl(control)} className="text-red-500 text-xs">Remove</button>
-            </div>
-          ))}
+          {(currentNode.controls || []).length === 0 ? (
+            <p className="text-sm text-gray-500 italic">No controls added yet</p>
+          ) : (
+            (currentNode.controls || []).map((control, idx) => (
+              <div key={idx} className="flex justify-between items-center bg-green-50 p-2 rounded mb-1">
+                <span className="text-sm">{control}</span>
+                <button onClick={() => removeControl(control)} className="text-red-500 text-xs hover:text-red-700">
+                  Remove
+                </button>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="mb-4">
           <h4 className="font-medium mb-2">Add Controls:</h4>
-          {controls.filter(c => !(node.controls || []).includes(c)).map((control, idx) => (
+          {controls.filter(c => !(currentNode.controls || []).includes(c)).map((control, idx) => (
             <button
               key={idx}
               onClick={() => addControl(control)}
-              className="block w-full text-left text-sm p-2 hover:bg-gray-100 rounded mb-1"
+              className="block w-full text-left text-sm p-2 hover:bg-gray-100 rounded mb-1 border border-gray-200"
             >
               + {control}
             </button>
           ))}
+          {controls.filter(c => !(currentNode.controls || []).includes(c)).length === 0 && (
+            <p className="text-sm text-gray-500 italic">All available controls have been added</p>
+          )}
         </div>
 
         <button
-          onClick={() => deleteNode(node.id)}
+          onClick={() => deleteNode(currentNode.id)}
           className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
         >
           Delete Node
