@@ -38,6 +38,37 @@ export default function ThreatPathDemo() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedThreatActor, setSelectedThreatActor] = useState('apt29');
   const [showNodePalette, setShowNodePalette] = useState(false);
+  const [selectedBoundary, setSelectedBoundary] = useState(null);
+  
+  const [boundaries, setBoundaries] = useState([
+    {
+      id: 'internal',
+      name: '🔒 Internal Network Zone',
+      x: 200,
+      y: 180,
+      width: 400,
+      height: 120,
+      color: 'red'
+    },
+    {
+      id: 'cloud',
+      name: '☁️ Cloud Infrastructure',
+      x: 650,
+      y: 30,
+      width: 200,
+      height: 140,
+      color: 'blue'
+    },
+    {
+      id: 'devices',
+      name: '📱 End User Devices',
+      x: 100,
+      y: 230,
+      width: 350,
+      height: 80,
+      color: 'green'
+    }
+  ]);
   
   const [nodes, setNodes] = useState([
     { id: 1, type: 'internet', x: 100, y: 100, label: 'Internet', controls: [] },
@@ -121,6 +152,7 @@ export default function ThreatPathDemo() {
     setNodes([]);
     setCurrentDiagramName('New Network');
     setSelectedNode(null);
+    setSelectedBoundary(null);
   };
 
   const addNode = (nodeType, label) => {
@@ -146,6 +178,7 @@ export default function ThreatPathDemo() {
       id: Date.now(),
       name,
       nodes,
+      boundaries,
       threatActor: selectedThreatActor,
       createdAt: new Date().toISOString(),
       user: currentUser?.email
@@ -161,6 +194,7 @@ export default function ThreatPathDemo() {
 
   const loadDiagram = (diagram) => {
     setNodes(diagram.nodes || []);
+    setBoundaries(diagram.boundaries || boundaries);
     setSelectedThreatActor(diagram.threatActor || 'apt29');
     setCurrentDiagramName(diagram.name);
     setShowLoadDialog(false);
@@ -286,6 +320,147 @@ export default function ThreatPathDemo() {
     );
   };
 
+  const getBorderColor = (color) => {
+    const colors = {
+      red: '#f87171',
+      blue: '#60a5fa', 
+      green: '#4ade80',
+      purple: '#a855f7',
+      yellow: '#fbbf24',
+      orange: '#fb923c',
+      pink: '#f472b6',
+      gray: '#9ca3af'
+    };
+    return colors[color] || colors.red;
+  };
+  
+  const getBackgroundColor = (color) => {
+    const colors = {
+      red: 'rgba(254, 226, 226, 0.3)',
+      blue: 'rgba(219, 234, 254, 0.3)',
+      green: 'rgba(220, 252, 231, 0.3)', 
+      purple: 'rgba(243, 232, 255, 0.3)',
+      yellow: 'rgba(254, 249, 195, 0.3)',
+      orange: 'rgba(255, 237, 213, 0.3)',
+      pink: 'rgba(252, 231, 243, 0.3)',
+      gray: 'rgba(243, 244, 246, 0.3)'
+    };
+    return colors[color] || colors.red;
+  };
+  
+  const getTextColor = (color) => {
+    const colors = {
+      red: '#dc2626',
+      blue: '#2563eb',
+      green: '#16a34a', 
+      purple: '#9333ea',
+      yellow: '#d97706',
+      orange: '#ea580c',
+      pink: '#db2777',
+      gray: '#6b7280'
+    };
+    return colors[color] || colors.red;
+  };
+
+  const BoundaryComponent = ({ boundary }) => {
+    const handleMouseDown = (e, action) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startBoundary = { ...boundary };
+      
+      const handleMouseMove = (moveEvent) => {
+        const deltaX = moveEvent.clientX - startX;
+        const deltaY = moveEvent.clientY - startY;
+        
+        setBoundaries(prev => prev.map(b => {
+          if (b.id !== boundary.id) return b;
+          
+          if (action === 'move') {
+            return {
+              ...b,
+              x: Math.max(10, Math.min(800 - b.width, startBoundary.x + deltaX)),
+              y: Math.max(10, Math.min(400 - b.height, startBoundary.y + deltaY))
+            };
+          } else if (action === 'resize') {
+            return {
+              ...b,
+              width: Math.max(100, startBoundary.width + deltaX),
+              height: Math.max(60, startBoundary.height + deltaY)
+            };
+          }
+          return b;
+        }));
+      };
+      
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+      
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    };
+    
+    return (
+      <div
+        className={`absolute border-2 border-dashed rounded-lg ${
+          selectedBoundary?.id === boundary.id ? 'ring-2 ring-yellow-400' : ''
+        }`}
+        style={{ 
+          left: boundary.x, 
+          top: boundary.y, 
+          width: boundary.width, 
+          height: boundary.height,
+          borderColor: getBorderColor(boundary.color),
+          backgroundColor: getBackgroundColor(boundary.color)
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setSelectedBoundary(boundary);
+        }}
+      >
+        <span 
+          className="absolute -top-6 left-2 text-xs font-bold bg-white px-2 rounded cursor-move select-none"
+          style={{ color: getTextColor(boundary.color) }}
+          onMouseDown={(e) => handleMouseDown(e, 'move')}
+        >
+          {boundary.name}
+        </span>
+        
+        <div 
+          className="absolute bottom-0 right-0 w-4 h-4 rounded-tl cursor-se-resize opacity-50 hover:opacity-100"
+          style={{ backgroundColor: getBorderColor(boundary.color) }}
+          onMouseDown={(e) => handleMouseDown(e, 'resize')}
+        >
+          <div className="absolute bottom-0 right-0 w-2 h-2 bg-white rounded-tl"></div>
+        </div>
+        
+        {selectedBoundary?.id === boundary.id && (
+          <>
+            <div 
+              className="absolute -top-1 -left-1 w-3 h-3 rounded cursor-move"
+              style={{ backgroundColor: getBorderColor(boundary.color) }}
+              onMouseDown={(e) => handleMouseDown(e, 'move')}
+            ></div>
+            <div 
+              className="absolute -top-1 -right-1 w-3 h-3 rounded cursor-move"
+              style={{ backgroundColor: getBorderColor(boundary.color) }}
+              onMouseDown={(e) => handleMouseDown(e, 'move')}
+            ></div>
+            <div 
+              className="absolute -bottom-1 -left-1 w-3 h-3 rounded cursor-move"
+              style={{ backgroundColor: getBorderColor(boundary.color) }}
+              onMouseDown={(e) => handleMouseDown(e, 'move')}
+            ></div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   const NodeComponent = ({ node }) => {
     const IconComponent = nodeIcons[node.type] || Server;
     
@@ -325,6 +500,7 @@ export default function ThreatPathDemo() {
         
         if (!hasMoved) {
           setSelectedNode(node);
+          setSelectedBoundary(null);
         }
       };
       
@@ -351,78 +527,7 @@ export default function ThreatPathDemo() {
             <IconComponent className="w-6 h-6 mx-auto mb-1 text-gray-700" />
             {node.controls?.length > 0 && (
               <div className="flex justify-center">
-                <Lock className="w-3 h-3 text-green-600" />
-                <span className="text-xs text-green-600 ml-1">{node.controls.length}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const ControlsPanel = ({ node, onClose }) => {
-    const securityControls = [
-      // Traditional Network Security
-      'Firewall Rules', 'IPS/IDS', 'WAF', 'DPI', 'Network Segmentation', 'VPN',
-      // Endpoint Security
-      'Endpoint Protection', 'EDR/XDR', 'Antivirus', 'Device Encryption', 'Mobile Device Management (MDM)',
-      // Identity & Access
-      'Multi-Factor Authentication (MFA)', 'Single Sign-On (SSO)', 'Privileged Access Management (PAM)', 
-      'Identity and Access Management (IAM)', 'Role-Based Access Control (RBAC)', 'Zero Trust Architecture',
-      // Cloud Security
-      'CloudTrail', 'GuardDuty', 'Azure Sentinel', 'Google Cloud Security Command Center',
-      'Cloud Security Posture Management (CSPM)', 'Cloud Workload Protection (CWP)',
-      // Container & Kubernetes Security
-      'Pod Security Standards', 'Container Image Scanning', 'Service Mesh Security', 
-      'Kubernetes Network Policies', 'Container Runtime Security',
-      // Data Security
-      'Encryption at Rest', 'Encryption in Transit', 'Data Loss Prevention (DLP)',
-      'Database Activity Monitoring (DAM)', 'Data Classification',
-      // Monitoring & Analytics
-      'SIEM', 'SOAR', 'Security Orchestration', 'Threat Intelligence', 'Behavioral Analytics',
-      'Log Management', 'Network Traffic Analysis', 'User Behavior Analytics (UBA)',
-      // Application Security
-      'Static Application Security Testing (SAST)', 'Dynamic Application Security Testing (DAST)',
-      'Interactive Application Security Testing (IAST)', 'Software Composition Analysis (SCA)',
-      // IoT & OT Security
-      'IoT Device Management', 'OT Network Monitoring', 'Industrial Control System Security',
-      // Backup & Recovery
-      'Backup and Recovery', 'Disaster Recovery', 'High Availability'
-    ];
-
-    const addControl = (control) => {
-      const updatedNodes = nodes.map(n => 
-        n.id === node.id ? { ...n, controls: [...(n.controls || []), control] } : n
-      );
-      setNodes(updatedNodes);
-      
-      const updatedNode = updatedNodes.find(n => n.id === node.id);
-      setSelectedNode(updatedNode);
-    };
-
-    const removeControl = (control) => {
-      const updatedNodes = nodes.map(n => 
-        n.id === node.id ? { ...n, controls: (n.controls || []).filter(c => c !== control) } : n
-      );
-      setNodes(updatedNodes);
-      
-      const updatedNode = updatedNodes.find(n => n.id === node.id);
-      setSelectedNode(updatedNode);
-    };
-
-    const currentNode = nodes.find(n => n.id === node.id) || node;
-
-    return (
-      <div className="bg-white rounded-lg shadow-xl p-6 border max-w-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">{currentNode.label}</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">×</button>
-        </div>
-        
-        <div className="mb-4">
-          <h4 className="font-medium mb-2 flex items-center">
-            <Lock className="w-4 h-4 mr-1 text-green-600" />
+                <Lock className="w-4 h-4 mr-1 text-green-600" />
             Active Controls ({(currentNode.controls || []).length}):
           </h4>
           {(currentNode.controls || []).length === 0 ? (
@@ -592,7 +697,7 @@ export default function ThreatPathDemo() {
             <div className="p-4 border-b flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-semibold">Advanced Network Architecture</h2>
-                <p className="text-gray-600">Drag gray bars to move • Click to configure • 50+ security controls available</p>
+                <p className="text-gray-600">Drag nodes/boundaries • Click to configure • Interactive trust zones</p>
               </div>
               <button
                 onClick={() => setShowNodePalette(true)}
@@ -602,30 +707,16 @@ export default function ThreatPathDemo() {
               </button>
             </div>
             
-            <div className="relative h-96 bg-gray-50 diagram-area">
-              {/* Trust Boundaries */}
-              <div className="absolute border-2 border-dashed border-red-400 bg-red-50 bg-opacity-30 rounded-lg"
-                   style={{ left: 200, top: 180, width: 400, height: 120 }}>
-                <span className="absolute -top-6 left-2 text-xs font-bold text-red-600 bg-white px-2 rounded">
-                  🔒 Internal Network Zone
-                </span>
-              </div>
+            <div className="relative h-96 bg-gray-50 diagram-area"
+                 onClick={() => {
+                   setSelectedNode(null);
+                   setSelectedBoundary(null);
+                 }}>
               
-              <div className="absolute border-2 border-dashed border-blue-400 bg-blue-50 bg-opacity-30 rounded-lg"
-                   style={{ left: 650, top: 30, width: 200, height: 140 }}>
-                <span className="absolute -top-6 left-2 text-xs font-bold text-blue-600 bg-white px-2 rounded">
-                  ☁️ Cloud Infrastructure
-                </span>
-              </div>
+              {boundaries.map(boundary => (
+                <BoundaryComponent key={boundary.id} boundary={boundary} />
+              ))}
               
-              <div className="absolute border-2 border-dashed border-green-400 bg-green-50 bg-opacity-30 rounded-lg"
-                   style={{ left: 100, top: 230, width: 350, height: 80 }}>
-                <span className="absolute -top-6 left-2 text-xs font-bold text-green-600 bg-white px-2 rounded">
-                  📱 End User Devices
-                </span>
-              </div>
-              
-              {/* Connection Lines */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none">
                 <line x1="150" y1="100" x2="200" y2="100" stroke="#94a3b8" strokeWidth="2" />
                 <line x1="300" y1="100" x2="350" y2="100" stroke="#94a3b8" strokeWidth="2" />
@@ -693,7 +784,10 @@ export default function ThreatPathDemo() {
             />
             <div className="flex space-x-2">
               <button 
-                onClick={(e) => saveDiagram(e.target.previousElementSibling.value)}
+                onClick={(e) => {
+                  const input = e.target.parentElement.previousElementSibling;
+                  saveDiagram(input.value || 'Untitled Diagram');
+                }}
                 className="flex-1 bg-blue-600 text-white py-2 rounded"
               >
                 Save
@@ -736,4 +830,189 @@ export default function ThreatPathDemo() {
       )}
     </div>
   );
-}
+}3 h-3 text-green-600" />
+                <span className="text-xs text-green-600 ml-1">{node.controls.length}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const BoundaryControlsPanel = ({ boundary, onClose }) => {
+    const updateBoundary = (updates) => {
+      setBoundaries(prev => prev.map(b => 
+        b.id === boundary.id ? { ...b, ...updates } : b
+      ));
+      setSelectedBoundary({ ...boundary, ...updates });
+    };
+
+    const deleteBoundary = () => {
+      setBoundaries(prev => prev.filter(b => b.id !== boundary.id));
+      setSelectedBoundary(null);
+    };
+
+    const addNewBoundary = () => {
+      const newBoundary = {
+        id: Date.now().toString(),
+        name: '🔧 Custom Zone',
+        x: 300,
+        y: 150,
+        width: 200,
+        height: 100,
+        color: 'purple'
+      };
+      setBoundaries(prev => [...prev, newBoundary]);
+      setSelectedBoundary(newBoundary);
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow-xl p-6 border max-w-md">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Trust Boundary Settings</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">×</button>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Zone Name</label>
+            <input
+              type="text"
+              value={boundary.name}
+              onChange={(e) => updateBoundary({ name: e.target.value })}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">X Position</label>
+              <input
+                type="number"
+                value={boundary.x}
+                onChange={(e) => updateBoundary({ x: parseInt(e.target.value) || 0 })}
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Y Position</label>
+              <input
+                type="number"
+                value={boundary.y}
+                onChange={(e) => updateBoundary({ y: parseInt(e.target.value) || 0 })}
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Width</label>
+              <input
+                type="number"
+                value={boundary.width}
+                onChange={(e) => updateBoundary({ width: parseInt(e.target.value) || 100 })}
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Height</label>
+              <input
+                type="number"
+                value={boundary.height}
+                onChange={(e) => updateBoundary({ height: parseInt(e.target.value) || 60 })}
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Color</label>
+            <select
+              value={boundary.color}
+              onChange={(e) => updateBoundary({ color: e.target.value })}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="red">Red</option>
+              <option value="blue">Blue</option>
+              <option value="green">Green</option>
+              <option value="purple">Purple</option>
+              <option value="yellow">Yellow</option>
+              <option value="orange">Orange</option>
+              <option value="pink">Pink</option>
+              <option value="gray">Gray</option>
+            </select>
+          </div>
+          
+          <div className="flex space-x-2">
+            <button
+              onClick={addNewBoundary}
+              className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            >
+              Add New Zone
+            </button>
+            <button
+              onClick={deleteBoundary}
+              className="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700"
+            >
+              Delete Zone
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ControlsPanel = ({ node, onClose }) => {
+    const securityControls = [
+      'Firewall Rules', 'IPS/IDS', 'WAF', 'DPI', 'Network Segmentation', 'VPN',
+      'Endpoint Protection', 'EDR/XDR', 'Antivirus', 'Device Encryption', 'Mobile Device Management (MDM)',
+      'Multi-Factor Authentication (MFA)', 'Single Sign-On (SSO)', 'Privileged Access Management (PAM)', 
+      'Identity and Access Management (IAM)', 'Role-Based Access Control (RBAC)', 'Zero Trust Architecture',
+      'CloudTrail', 'GuardDuty', 'Azure Sentinel', 'Google Cloud Security Command Center',
+      'Cloud Security Posture Management (CSPM)', 'Cloud Workload Protection (CWP)',
+      'Pod Security Standards', 'Container Image Scanning', 'Service Mesh Security', 
+      'Kubernetes Network Policies', 'Container Runtime Security',
+      'Encryption at Rest', 'Encryption in Transit', 'Data Loss Prevention (DLP)',
+      'Database Activity Monitoring (DAM)', 'Data Classification',
+      'SIEM', 'SOAR', 'Security Orchestration', 'Threat Intelligence', 'Behavioral Analytics',
+      'Log Management', 'Network Traffic Analysis', 'User Behavior Analytics (UBA)',
+      'Static Application Security Testing (SAST)', 'Dynamic Application Security Testing (DAST)',
+      'Interactive Application Security Testing (IAST)', 'Software Composition Analysis (SCA)',
+      'IoT Device Management', 'OT Network Monitoring', 'Industrial Control System Security',
+      'Backup and Recovery', 'Disaster Recovery', 'High Availability'
+    ];
+
+    const addControl = (control) => {
+      const updatedNodes = nodes.map(n => 
+        n.id === node.id ? { ...n, controls: [...(n.controls || []), control] } : n
+      );
+      setNodes(updatedNodes);
+      
+      const updatedNode = updatedNodes.find(n => n.id === node.id);
+      setSelectedNode(updatedNode);
+    };
+
+    const removeControl = (control) => {
+      const updatedNodes = nodes.map(n => 
+        n.id === node.id ? { ...n, controls: (n.controls || []).filter(c => c !== control) } : n
+      );
+      setNodes(updatedNodes);
+      
+      const updatedNode = updatedNodes.find(n => n.id === node.id);
+      setSelectedNode(updatedNode);
+    };
+
+    const currentNode = nodes.find(n => n.id === node.id) || node;
+
+    return (
+      <div className="bg-white rounded-lg shadow-xl p-6 border max-w-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">{currentNode.label}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">×</button>
+        </div>
+        
+        <div className="mb-4">
+          <h4 className="font-medium mb-2 flex items-center">
+            <Lock className="w-
