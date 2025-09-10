@@ -372,8 +372,8 @@ export default function ThreatPathDemo() {
           if (action === 'move') {
             return {
               ...b,
-              x: Math.max(10, Math.min(800 - b.width, startBoundary.x + deltaX)),
-              y: Math.max(10, Math.min(600 - b.height, startBoundary.y + deltaY))
+              x: Math.max(10, Math.min(1000 - b.width, startBoundary.x + deltaX)),
+              y: Math.max(10, Math.min(1000 - b.height, startBoundary.y + deltaY))
             };
           } else if (action === 'resize') {
             return {
@@ -478,8 +478,8 @@ export default function ThreatPathDemo() {
           n.id === node.id 
             ? { 
                 ...n, 
-                x: Math.max(25, Math.min(775, newX)), 
-                y: Math.max(25, Math.min(575, newY)) 
+                x: Math.max(25, Math.min(1000, newX)), 
+                y: Math.max(25, Math.min(1000, newY)) 
               }
             : n
         ));
