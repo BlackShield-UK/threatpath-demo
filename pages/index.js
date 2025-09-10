@@ -479,7 +479,7 @@ export default function ThreatPathDemo() {
             ? { 
                 ...n, 
                 x: Math.max(25, Math.min(775, newX)), 
-                y: Math.max(25, Math.min(375, newY)) 
+                y: Math.max(25, Math.min(575, newY)) 
               }
             : n
         ));
