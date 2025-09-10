@@ -673,6 +673,14 @@ export default function ThreatPathDemo() {
         </div>
       )}
 
+      {selectedBoundary && currentView === 'diagram' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="max-w-md w-full mx-4">
+            <BoundaryControlsPanel boundary={selectedBoundary} onClose={() => setSelectedBoundary(null)} />
+          </div>
+        </div>
+      )}
+
       {showSaveDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded p-6 max-w-md w-full mx-4">
