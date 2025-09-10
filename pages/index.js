@@ -24,7 +24,9 @@ import {
   Cpu,
   Settings,
   Users,
-  Key
+  Key,
+  Menu,
+  X
 } from 'lucide-react';
 
 export default function ThreatPathDemo() {
@@ -846,19 +848,23 @@ export default function ThreatPathDemo() {
       <div className="bg-black shadow-lg border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              <div className="bg-white rounded-lg p-2 mr-4">
-                <Shield className="w-6 h-6 text-black" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white tracking-wide">
-                  BLACK <span className="text-gray-300">SHIELD</span>
-                </h1>
-                <p className="text-xs text-orange-400 font-semibold tracking-wider">INTELLIGENCE & SECURITY</p>
-              </div>
-              <div className="ml-6 pl-6 border-l border-gray-600">
-                <h2 className="text-lg font-semibold text-white">ThreatPath Pro</h2>
-                <p className="text-sm text-gray-400">{currentDiagramName} • {currentUser?.name}</p>
+            <div className="flex items-center space-x-4">
+              <DropdownMenu />
+              
+              <div className="flex items-center">
+                <div className="bg-white rounded-lg p-2 mr-4">
+                  <Shield className="w-6 h-6 text-black" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white tracking-wide">
+                    BLACK <span className="text-gray-300">SHIELD</span>
+                  </h1>
+                  <p className="text-xs text-orange-400 font-semibold tracking-wider">INTELLIGENCE & SECURITY</p>
+                </div>
+                <div className="ml-6 pl-6 border-l border-gray-600">
+                  <h2 className="text-lg font-semibold text-white">ThreatPath Pro</h2>
+                  <p className="text-sm text-gray-400">{currentDiagramName} • {currentUser?.name}</p>
+                </div>
               </div>
             </div>
             <div className="flex space-x-2">
