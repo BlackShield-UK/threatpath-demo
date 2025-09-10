@@ -666,6 +666,7 @@ export default function ThreatPathDemo() {
 
       {showSaveDialog && <SaveDialog />}
       {showLoadDialog && <LoadDialog />}
+      {showNodePalette && <NodePalette />}
 
       {selectedNode && currentView === 'diagram' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
