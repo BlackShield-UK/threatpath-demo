@@ -373,7 +373,7 @@ export default function ThreatPathDemo() {
             return {
               ...b,
               x: Math.max(10, Math.min(800 - b.width, startBoundary.x + deltaX)),
-              y: Math.max(10, Math.min(400 - b.height, startBoundary.y + deltaY))
+              y: Math.max(10, Math.min(600 - b.height, startBoundary.y + deltaY))
             };
           } else if (action === 'resize') {
             return {
