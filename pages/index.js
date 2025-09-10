@@ -831,16 +831,7 @@ export default function ThreatPathDemo() {
             </div>
             
             <div 
-              className="relative h-96 bg-gray-50 overflow-x-auto"
-              onMouseMove={(e) => {
-                if (isDragging) {
-                  // Handle global mouse move for dragging
-                  const draggedNode = nodes.find(n => selectedNode?.id === n.id);
-                  if (draggedNode) {
-                    handleNodeDrag(draggedNode, e);
-                  }
-                }
-              }}
+              className="relative h-96 bg-gray-50 overflow-x-auto diagram-container"
             >
               <svg className="absolute inset-0 w-full h-full pointer-events-none min-w-[900px]">
                 {connections.map((conn, idx) => {
