@@ -446,7 +446,7 @@ export default function ThreatPathDemo() {
             <div className="p-4 border-b flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-semibold">Network Architecture</h2>
-                <p className="text-gray-600">Click nodes to configure security controls</p>
+                <p className="text-gray-600">Click nodes to configure • Drag to reposition</p>
               </div>
               <button
                 onClick={() => setShowNodePalette(true)}
@@ -456,7 +456,7 @@ export default function ThreatPathDemo() {
               </button>
             </div>
             
-            <div className="relative h-96 bg-gray-50">
+            <div className="relative h-96 bg-gray-50 diagram-area">
               {nodes.map(node => (
                 <NodeComponent key={node.id} node={node} />
               ))}
