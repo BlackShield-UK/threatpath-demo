@@ -139,14 +139,12 @@ export default function ThreatPathDemo() {
 
   // Mock user login
   const handleLogin = (email, password) => {
-    // In real app, this would be API call
     setCurrentUser({ 
       name: email.split('@')[0], 
       email: email,
       company: 'Demo Corp'
     });
     setIsAuthenticated(true);
-    // Load saved diagrams from localStorage simulation
     if (typeof window !== 'undefined') {
       const saved = JSON.parse(localStorage.getItem('threatpath_diagrams') || '[]');
       setSavedDiagrams(saved);
@@ -339,8 +337,6 @@ export default function ThreatPathDemo() {
   };
 
   const ControlsPanel = ({ node, onClose }) => {
-    const [newControl, setNewControl] = useState('');
-    
     const securityControls = [
       'Firewall Rules', 'IDS/IPS', 'WAF', 'Endpoint Protection', 
       'MFA', 'Access Control Lists', 'Network Segmentation',
@@ -424,7 +420,7 @@ export default function ThreatPathDemo() {
               onClick={() => setSelectedThreatActor(key)}
               className={`p-3 rounded-lg border-2 text-left transition-all ${
                 selectedThreatActor === key
-                  ? `border-${actor.color}-500 bg-${actor.color}-50`
+                  ? 'border-red-500 bg-red-50'
                   : 'border-gray-300 bg-white hover:border-gray-400'
               }`}
             >
@@ -455,9 +451,9 @@ export default function ThreatPathDemo() {
         
         {currentThreatActor.attackPaths.map(path => (
           <div key={path.id} className="mb-8 bg-white rounded-lg shadow-lg border">
-            <div className={`bg-${currentThreatActor.color}-50 p-4 border-b`}>
-              <h3 className={`text-lg font-semibold flex items-center text-${currentThreatActor.color}-800`}>
-                <Target className={`w-5 h-5 mr-2 text-${currentThreatActor.color}-600`} />
+            <div className="bg-red-50 p-4 border-b">
+              <h3 className="text-lg font-semibold flex items-center text-red-800">
+                <Target className="w-5 h-5 mr-2 text-red-600" />
                 {path.name}
               </h3>
               <p className="text-sm text-gray-600 mt-1">{currentThreatActor.description}</p>
@@ -512,7 +508,7 @@ export default function ThreatPathDemo() {
           </div>
         ))}
 
-        <div className={`bg-blue-50 border border-blue-200 rounded-lg p-4`}>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h4 className="font-medium text-blue-900 mb-2">
             Recommendations against {currentThreatActor.name}:
           </h4>
@@ -561,7 +557,6 @@ export default function ThreatPathDemo() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -622,7 +617,6 @@ export default function ThreatPathDemo() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto p-6">
         {currentView === 'diagram' && (
           <div className="bg-white rounded-lg shadow-lg">
@@ -632,12 +626,57 @@ export default function ThreatPathDemo() {
             </div>
             
             <div className="relative h-96 bg-gray-50 overflow-x-auto">
-              {/* Connection lines */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none min-w-[900px]">
-                {/* Original connections */}
                 <line x1="200" y1="100" x2="350" y2="100" stroke="#94a3b8" strokeWidth="2" />
                 <line x1="350" y1="100" x2="500" y2="50" stroke="#94a3b8" strokeWidth="2" />
                 <line x1="200" y1="200" x2="350" y2="200" stroke="#94a3b8" strokeWidth="2" />
                 <line x1="350" y1="200" x2="500" y2="200" stroke="#94a3b8" strokeWidth="2" />
                 <line x1="500" y1="200" x2="650" y2="200" stroke="#94a3b8" strokeWidth="2" />
-                <line
+                <line x1="200" y1="100" x2="200" y2="200" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="500" y1="50" x2="700" y2="50" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="700" y1="50" x2="650" y2="120" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="700" y1="50" x2="800" y2="100" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="50" y1="200" x2="200" y2="200" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="650" y1="200" x2="750" y2="200" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3,3" />
+              </svg>
+              
+              {nodes.map(node => (
+                <NodeComponent
+                  key={node.id}
+                  node={node}
+                  isSelected={selectedNode?.id === node.id}
+                  onClick={setSelectedNode}
+                />
+              ))}
+              
+              <div className="absolute border-2 border-dashed border-red-400 bg-red-50 bg-opacity-30 rounded"
+                   style={{ left: 150, top: 170, width: 520, height: 60 }}>
+                <span className="absolute -top-6 left-2 text-xs font-medium text-red-600">Internal Network</span>
+              </div>
+              <div className="absolute border-2 border-dashed border-blue-400 bg-blue-50 bg-opacity-30 rounded"
+                   style={{ left: 680, top: 30, width: 140, height: 120 }}>
+                <span className="absolute -top-6 left-2 text-xs font-medium text-blue-600">Cloud Infrastructure</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentView === 'attacks' && <AttackPathView />}
+      </div>
+
+      {showSaveDialog && <SaveDialog />}
+      {showLoadDialog && <LoadDialog />}
+
+      {selectedNode && currentView === 'diagram' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="max-w-md w-full mx-4">
+            <ControlsPanel 
+              node={selectedNode} 
+              onClose={() => setSelectedNode(null)} 
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
