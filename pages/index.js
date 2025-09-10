@@ -16,14 +16,22 @@ import {
   Globe,
   Laptop,
   Router,
-  Container
+  Container,
+  CloudLightning,
+  HardDrive,
+  Zap,
+  Layers,
+  Cpu,
+  Settings,
+  Users,
+  Key
 } from 'lucide-react';
 
 export default function ThreatPathDemo() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [savedDiagrams, setSavedDiagrams] = useState([]);
-  const [currentDiagramName, setCurrentDiagramName] = useState('Demo Network');
+  const [currentDiagramName, setCurrentDiagramName] = useState('Advanced Network');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [currentView, setCurrentView] = useState('diagram');
@@ -33,28 +41,35 @@ export default function ThreatPathDemo() {
   
   const [nodes, setNodes] = useState([
     { id: 1, type: 'internet', x: 100, y: 100, label: 'Internet', controls: [] },
-    { id: 2, type: 'firewall', x: 250, y: 100, label: 'Firewall', controls: ['IPS'] },
+    { id: 2, type: 'firewall', x: 250, y: 100, label: 'Perimeter Firewall', controls: ['IPS/IDS', 'DPI'] },
     { id: 3, type: 'server', x: 400, y: 100, label: 'Web Server', controls: ['WAF'] },
-    { id: 4, type: 'database', x: 550, y: 100, label: 'Database', controls: [] },
-    { id: 5, type: 'endpoint', x: 250, y: 200, label: 'Workstation', controls: [] }
+    { id: 4, type: 'database', x: 550, y: 100, label: 'Customer DB', controls: ['Encryption at Rest'] },
+    { id: 5, type: 'endpoint', x: 250, y: 200, label: 'Employee Laptop', controls: ['Endpoint Protection'] },
+    { id: 6, type: 'cloud-aws', x: 700, y: 80, label: 'AWS Cloud', controls: ['CloudTrail', 'GuardDuty'] },
+    { id: 7, type: 'kubernetes', x: 750, y: 130, label: 'Kubernetes', controls: ['Pod Security Standards'] },
+    { id: 8, type: 'mobile', x: 150, y: 250, label: 'Mobile Devices', controls: ['Mobile Device Management (MDM)'] },
+    { id: 9, type: 'iot', x: 350, y: 280, label: 'IoT Sensors', controls: [] },
+    { id: 10, type: 'storage', x: 650, y: 180, label: 'Cloud Storage', controls: ['Encryption in Transit'] }
   ]);
 
   const threatActors = {
     apt29: {
       name: "APT29 (Cozy Bear)",
-      description: "Russian state-sponsored group",
+      description: "Russian state-sponsored group targeting cloud infrastructure",
       attackPaths: [{
         id: 1,
-        name: "Web Attack → Data Breach",
+        name: "Cloud → Container → Data Exfiltration",
         steps: [
-          { from: 1, to: 3, ttp: "T1190: Exploit Web App", risk: "high", description: "Attack web server" },
-          { from: 3, to: 4, ttp: "T1005: Data from Local System", risk: "high", description: "Access database" }
+          { from: 1, to: 6, ttp: "T1190: Exploit Public-Facing Application", risk: "high", description: "Attack cloud services directly" },
+          { from: 6, to: 7, ttp: "T1611: Escape to Host", risk: "high", description: "Container escape to Kubernetes" },
+          { from: 7, to: 4, ttp: "T1005: Data from Local System", risk: "medium", description: "Access customer database" },
+          { from: 8, to: 5, ttp: "T1566.002: Spearphishing Link", risk: "high", description: "Mobile phishing attack" }
         ]
       }]
     },
     apt1: {
       name: "APT1 (Comment Crew)", 
-      description: "Chinese military unit",
+      description: "Chinese military unit specializing in IoT and infrastructure attacks",
       attackPaths: [{
         id: 2,
         name: "IoT → Network Pivot → Cloud Compromise",
@@ -76,7 +91,17 @@ export default function ThreatPathDemo() {
     endpoint: Laptop,
     mobile: Smartphone,
     iot: Router,
-    container: Container
+    container: Container,
+    kubernetes: Layers,
+    'cloud-aws': Cloud,
+    'cloud-azure': CloudLightning,
+    'cloud-gcp': Zap,
+    storage: HardDrive,
+    'load-balancer': Settings,
+    'api-gateway': Cpu,
+    'identity-provider': Users,
+    'key-vault': Key,
+    network: Wifi
   };
 
   const handleLogin = (email, password) => {
@@ -193,39 +218,66 @@ export default function ThreatPathDemo() {
   };
 
   const NodePalette = () => {
-    const nodeTypes = [
-      { type: 'server', label: 'Server', icon: Server },
-      { type: 'firewall', label: 'Firewall', icon: Shield },
-      { type: 'database', label: 'Database', icon: Database },
-      { type: 'endpoint', label: 'Workstation', icon: Laptop },
-      { type: 'mobile', label: 'Mobile', icon: Smartphone },
-      { type: 'iot', label: 'IoT Device', icon: Router }
-    ];
+    const nodeCategories = {
+      'Core Infrastructure': [
+        { type: 'server', label: 'Server', icon: Server },
+        { type: 'firewall', label: 'Firewall', icon: Shield },
+        { type: 'database', label: 'Database', icon: Database },
+        { type: 'storage', label: 'Storage', icon: HardDrive },
+        { type: 'load-balancer', label: 'Load Balancer', icon: Settings },
+        { type: 'network', label: 'Network Segment', icon: Wifi }
+      ],
+      'Cloud Services': [
+        { type: 'cloud-aws', label: 'AWS Cloud', icon: Cloud },
+        { type: 'cloud-azure', label: 'Azure Cloud', icon: CloudLightning },
+        { type: 'cloud-gcp', label: 'Google Cloud', icon: Zap },
+        { type: 'kubernetes', label: 'Kubernetes', icon: Layers },
+        { type: 'container', label: 'Container', icon: Container },
+        { type: 'api-gateway', label: 'API Gateway', icon: Cpu }
+      ],
+      'Endpoints & Devices': [
+        { type: 'endpoint', label: 'Workstation', icon: Laptop },
+        { type: 'mobile', label: 'Mobile Device', icon: Smartphone },
+        { type: 'iot', label: 'IoT Device', icon: Router }
+      ],
+      'Security & Identity': [
+        { type: 'identity-provider', label: 'Identity Provider', icon: Users },
+        { type: 'key-vault', label: 'Key Vault', icon: Key }
+      ]
+    };
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-          <h3 className="text-lg font-semibold mb-4">Add Network Component</h3>
-          
-          <div className="grid grid-cols-3 gap-3">
-            {nodeTypes.map((nodeType) => {
-              const IconComponent = nodeType.icon;
-              return (
-                <button
-                  key={nodeType.type}
-                  onClick={() => addNode(nodeType.type, nodeType.label)}
-                  className="p-4 border-2 border-gray-300 rounded-lg hover:border-blue-400 text-center"
-                >
-                  <IconComponent className="w-8 h-8 mx-auto mb-2" />
-                  <div className="text-sm">{nodeType.label}</div>
-                </button>
-              );
-            })}
+        <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-96 overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Add Network Component</h3>
+            <button onClick={() => setShowNodePalette(false)} className="text-gray-500 hover:text-gray-700 text-xl">×</button>
           </div>
+          
+          {Object.entries(nodeCategories).map(([category, nodeTypes]) => (
+            <div key={category} className="mb-6">
+              <h4 className="text-md font-medium text-gray-800 mb-3 border-b pb-1">{category}</h4>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                {nodeTypes.map((nodeType) => {
+                  const IconComponent = nodeType.icon;
+                  return (
+                    <button
+                      key={nodeType.type}
+                      onClick={() => addNode(nodeType.type, nodeType.label)}
+                      className="p-3 border-2 border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 text-center transition-all"
+                    >
+                      <IconComponent className="w-6 h-6 mx-auto mb-1 text-gray-700" />
+                      <div className="text-xs font-medium">{nodeType.label}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
           
           <button
             onClick={() => setShowNodePalette(false)}
-            className="w-full mt-4 bg-gray-300 py-2 rounded"
+            className="w-full mt-4 bg-gray-300 py-2 rounded hover:bg-gray-400"
           >
             Cancel
           </button>
@@ -271,7 +323,6 @@ export default function ThreatPathDemo() {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
         
-        // If we didn't move, treat it as a click
         if (!hasMoved) {
           setSelectedNode(node);
         }
@@ -289,7 +340,6 @@ export default function ThreatPathDemo() {
         style={{ left: node.x, top: node.y }}
       >
         <div className="bg-white rounded-lg shadow-lg border-2 border-gray-300 hover:border-blue-400 min-w-20 text-center">
-          {/* Drag handle at the top */}
           <div 
             className="bg-gray-100 rounded-t-md px-2 py-1 text-xs text-gray-600 font-medium border-b select-none cursor-move"
             onMouseDown={handleMouseDown}
@@ -300,7 +350,10 @@ export default function ThreatPathDemo() {
           <div className="p-2">
             <IconComponent className="w-6 h-6 mx-auto mb-1 text-gray-700" />
             {node.controls?.length > 0 && (
-              <Lock className="w-3 h-3 mx-auto text-green-600" />
+              <div className="flex justify-center">
+                <Lock className="w-3 h-3 text-green-600" />
+                <span className="text-xs text-green-600 ml-1">{node.controls.length}</span>
+              </div>
             )}
           </div>
         </div>
@@ -309,7 +362,34 @@ export default function ThreatPathDemo() {
   };
 
   const ControlsPanel = ({ node, onClose }) => {
-    const controls = ['Firewall Rules', 'IPS', 'WAF', 'Endpoint Protection', 'MFA', 'Encryption'];
+    const securityControls = [
+      // Traditional Network Security
+      'Firewall Rules', 'IPS/IDS', 'WAF', 'DPI', 'Network Segmentation', 'VPN',
+      // Endpoint Security
+      'Endpoint Protection', 'EDR/XDR', 'Antivirus', 'Device Encryption', 'Mobile Device Management (MDM)',
+      // Identity & Access
+      'Multi-Factor Authentication (MFA)', 'Single Sign-On (SSO)', 'Privileged Access Management (PAM)', 
+      'Identity and Access Management (IAM)', 'Role-Based Access Control (RBAC)', 'Zero Trust Architecture',
+      // Cloud Security
+      'CloudTrail', 'GuardDuty', 'Azure Sentinel', 'Google Cloud Security Command Center',
+      'Cloud Security Posture Management (CSPM)', 'Cloud Workload Protection (CWP)',
+      // Container & Kubernetes Security
+      'Pod Security Standards', 'Container Image Scanning', 'Service Mesh Security', 
+      'Kubernetes Network Policies', 'Container Runtime Security',
+      // Data Security
+      'Encryption at Rest', 'Encryption in Transit', 'Data Loss Prevention (DLP)',
+      'Database Activity Monitoring (DAM)', 'Data Classification',
+      // Monitoring & Analytics
+      'SIEM', 'SOAR', 'Security Orchestration', 'Threat Intelligence', 'Behavioral Analytics',
+      'Log Management', 'Network Traffic Analysis', 'User Behavior Analytics (UBA)',
+      // Application Security
+      'Static Application Security Testing (SAST)', 'Dynamic Application Security Testing (DAST)',
+      'Interactive Application Security Testing (IAST)', 'Software Composition Analysis (SCA)',
+      // IoT & OT Security
+      'IoT Device Management', 'OT Network Monitoring', 'Industrial Control System Security',
+      // Backup & Recovery
+      'Backup and Recovery', 'Disaster Recovery', 'High Availability'
+    ];
 
     const addControl = (control) => {
       const updatedNodes = nodes.map(n => 
@@ -317,7 +397,6 @@ export default function ThreatPathDemo() {
       );
       setNodes(updatedNodes);
       
-      // Update the selected node immediately so the panel reflects changes
       const updatedNode = updatedNodes.find(n => n.id === node.id);
       setSelectedNode(updatedNode);
     };
@@ -328,57 +407,68 @@ export default function ThreatPathDemo() {
       );
       setNodes(updatedNodes);
       
-      // Update the selected node immediately so the panel reflects changes
       const updatedNode = updatedNodes.find(n => n.id === node.id);
       setSelectedNode(updatedNode);
     };
 
-    // Use the current selectedNode to ensure we show the latest state
     const currentNode = nodes.find(n => n.id === node.id) || node;
 
     return (
-      <div className="bg-white rounded-lg shadow-xl p-6 border">
+      <div className="bg-white rounded-lg shadow-xl p-6 border max-w-lg">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">{currentNode.label}</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">×</button>
         </div>
         
         <div className="mb-4">
-          <h4 className="font-medium mb-2">Active Controls:</h4>
+          <h4 className="font-medium mb-2 flex items-center">
+            <Lock className="w-4 h-4 mr-1 text-green-600" />
+            Active Controls ({(currentNode.controls || []).length}):
+          </h4>
           {(currentNode.controls || []).length === 0 ? (
-            <p className="text-sm text-gray-500 italic">No controls added yet</p>
+            <p className="text-sm text-gray-500 italic bg-gray-50 p-3 rounded">No security controls configured</p>
           ) : (
-            (currentNode.controls || []).map((control, idx) => (
-              <div key={idx} className="flex justify-between items-center bg-green-50 p-2 rounded mb-1">
-                <span className="text-sm">{control}</span>
-                <button onClick={() => removeControl(control)} className="text-red-500 text-xs hover:text-red-700">
-                  Remove
-                </button>
-              </div>
-            ))
+            <div className="max-h-32 overflow-y-auto">
+              {(currentNode.controls || []).map((control, idx) => (
+                <div key={idx} className="flex justify-between items-center bg-green-50 p-2 rounded mb-1 border border-green-200">
+                  <span className="text-sm font-medium text-green-800">{control}</span>
+                  <button onClick={() => removeControl(control)} className="text-red-500 text-xs hover:text-red-700 px-2 py-1 rounded">
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
         <div className="mb-4">
-          <h4 className="font-medium mb-2">Add Controls:</h4>
-          {controls.filter(c => !(currentNode.controls || []).includes(c)).map((control, idx) => (
-            <button
-              key={idx}
-              onClick={() => addControl(control)}
-              className="block w-full text-left text-sm p-2 hover:bg-gray-100 rounded mb-1 border border-gray-200"
-            >
-              + {control}
-            </button>
-          ))}
-          {controls.filter(c => !(currentNode.controls || []).includes(c)).length === 0 && (
-            <p className="text-sm text-gray-500 italic">All available controls have been added</p>
+          <h4 className="font-medium mb-2 flex items-center">
+            <Plus className="w-4 h-4 mr-1 text-blue-600" />
+            Available Controls ({securityControls.filter(c => !(currentNode.controls || []).includes(c)).length}):
+          </h4>
+          <div className="max-h-40 overflow-y-auto border rounded">
+            {securityControls
+              .filter(c => !(currentNode.controls || []).includes(c))
+              .map((control, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => addControl(control)}
+                  className="block w-full text-left text-sm p-2 hover:bg-blue-50 border-b border-gray-100 transition-colors"
+                >
+                  + {control}
+                </button>
+              ))}
+          </div>
+          {securityControls.filter(c => !(currentNode.controls || []).includes(c)).length === 0 && (
+            <p className="text-sm text-gray-500 italic bg-gray-50 p-3 rounded">All available controls have been added</p>
           )}
         </div>
 
         <button
           onClick={() => deleteNode(currentNode.id)}
-          className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
+          className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 flex items-center justify-center"
         >
+          <AlertTriangle className="w-4 h-4 mr-2" />
           Delete Node
         </button>
       </div>
@@ -427,7 +517,9 @@ export default function ThreatPathDemo() {
                     <span className="font-medium">{fromNode?.label || 'Unknown'}</span>
                     <ArrowRight className="w-4 h-4 mx-2" />
                     <span className="font-medium">{toNode?.label || 'Unknown'}</span>
-                    <span className="ml-auto px-2 py-1 text-xs bg-red-200 text-red-800 rounded">
+                    <span className={`ml-auto px-2 py-1 text-xs rounded ${
+                      step.risk === 'high' ? 'bg-red-200 text-red-800' : 'bg-yellow-200 text-yellow-800'
+                    }`}>
                       {step.risk.toUpperCase()} RISK
                     </span>
                   </div>
@@ -499,8 +591,8 @@ export default function ThreatPathDemo() {
           <div className="bg-white rounded-lg shadow">
             <div className="p-4 border-b flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-semibold">Network Architecture</h2>
-                <p className="text-gray-600">Drag the gray bars to move nodes • Click icons to configure</p>
+                <h2 className="text-xl font-semibold">Advanced Network Architecture</h2>
+                <p className="text-gray-600">Drag gray bars to move • Click to configure • 50+ security controls available</p>
               </div>
               <button
                 onClick={() => setShowNodePalette(true)}
@@ -511,6 +603,40 @@ export default function ThreatPathDemo() {
             </div>
             
             <div className="relative h-96 bg-gray-50 diagram-area">
+              {/* Trust Boundaries */}
+              <div className="absolute border-2 border-dashed border-red-400 bg-red-50 bg-opacity-30 rounded-lg"
+                   style={{ left: 200, top: 180, width: 400, height: 120 }}>
+                <span className="absolute -top-6 left-2 text-xs font-bold text-red-600 bg-white px-2 rounded">
+                  🔒 Internal Network Zone
+                </span>
+              </div>
+              
+              <div className="absolute border-2 border-dashed border-blue-400 bg-blue-50 bg-opacity-30 rounded-lg"
+                   style={{ left: 650, top: 30, width: 200, height: 140 }}>
+                <span className="absolute -top-6 left-2 text-xs font-bold text-blue-600 bg-white px-2 rounded">
+                  ☁️ Cloud Infrastructure
+                </span>
+              </div>
+              
+              <div className="absolute border-2 border-dashed border-green-400 bg-green-50 bg-opacity-30 rounded-lg"
+                   style={{ left: 100, top: 230, width: 350, height: 80 }}>
+                <span className="absolute -top-6 left-2 text-xs font-bold text-green-600 bg-white px-2 rounded">
+                  📱 End User Devices
+                </span>
+              </div>
+              
+              {/* Connection Lines */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                <line x1="150" y1="100" x2="200" y2="100" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="300" y1="100" x2="350" y2="100" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="450" y1="100" x2="500" y2="100" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="450" y1="100" x2="650" y2="80" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="280" y1="130" x2="280" y2="180" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="700" y1="80" x2="750" y2="130" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="700" y1="80" x2="650" y2="180" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="200" y1="230" x2="250" y2="180" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3,3" />
+              </svg>
+
               {nodes.map(node => (
                 <NodeComponent key={node.id} node={node} />
               ))}
@@ -520,6 +646,7 @@ export default function ThreatPathDemo() {
                   <div className="text-center text-gray-500">
                     <Monitor className="w-16 h-16 mx-auto mb-4" />
                     <h3 className="text-lg font-medium mb-2">No Components</h3>
+                    <p className="text-sm mb-4">Add cloud services, containers, IoT devices and more</p>
                     <button
                       onClick={() => setShowNodePalette(true)}
                       className="px-4 py-2 bg-blue-600 text-white rounded"
@@ -540,7 +667,7 @@ export default function ThreatPathDemo() {
       
       {selectedNode && currentView === 'diagram' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="max-w-md w-full mx-4">
+          <div className="max-w-lg w-full mx-4">
             <ControlsPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
           </div>
         </div>
