@@ -893,7 +893,7 @@ export default function ThreatPathDemo() {
                 <BoundaryComponent key={boundary.id} boundary={boundary} />
               ))}
               
-              <svg className="absolute inset-0 w-full h-full pointer-events-none">
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 5 }}>
                 <line x1="150" y1="100" x2="200" y2="100" stroke="#94a3b8" strokeWidth="2" />
                 <line x1="300" y1="100" x2="350" y2="100" stroke="#94a3b8" strokeWidth="2" />
                 <line x1="450" y1="100" x2="500" y2="100" stroke="#94a3b8" strokeWidth="2" />
