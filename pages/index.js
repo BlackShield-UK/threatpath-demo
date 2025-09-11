@@ -907,7 +907,7 @@ export default function ThreatPathDemo() {
               </button>
             </div>
             
-            <div className="relative h-96 bg-gray-50 diagram-area"
+            <div className="relative h-[600px] bg-gray-50 diagram-area"
                  onClick={() => {
                    setSelectedNode(null);
                    setSelectedBoundary(null);
