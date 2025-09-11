@@ -801,6 +801,61 @@ export default function ThreatPathDemo() {
     );
   };
 
+  const ConnectionControlsPanel = ({ connection, onClose }) => {
+    const updateConnection = (updates) => {
+      setConnections(prev => prev.map(c => 
+        c.id === connection.id ? { ...c, ...updates } : c
+      ));
+      setSelectedConnection({ ...connection, ...updates });
+    };
+
+    const deleteConnection = () => {
+      setConnections(prev => prev.filter(c => c.id !== connection.id));
+      setSelectedConnection(null);
+    };
+
+    const fromNode = nodes.find(n => n.id === connection.from);
+    const toNode = nodes.find(n => n.id === connection.to);
+
+    return (
+      <div className="bg-white rounded-lg shadow-xl p-6 border max-w-md">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Connection Settings</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">×</button>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Connection</label>
+            <p className="text-sm text-gray-600">
+              {fromNode?.label || 'Unknown'} → {toNode?.label || 'Unknown'}
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Line Style</label>
+            <select
+              value={connection.type}
+              onChange={(e) => updateConnection({ type: e.target.value })}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="solid">Solid Line</option>
+              <option value="dashed">Dashed Line</option>
+              <option value="dotted">Dotted Line</option>
+            </select>
+          </div>
+          
+          <button
+            onClick={deleteConnection}
+            className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700"
+          >
+            Delete Connection
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const AttackPathView = () => {
     const currentThreatActor = threatActors[selectedThreatActor];
     
@@ -956,6 +1011,7 @@ export default function ThreatPathDemo() {
                  onClick={() => {
                    setSelectedNode(null);
                    setSelectedBoundary(null);
+                   setSelectedConnection(null);
                  }}>
               
               {boundaries.map(boundary => (
@@ -1031,6 +1087,14 @@ export default function ThreatPathDemo() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="max-w-md w-full mx-4">
             <BoundaryControlsPanel boundary={selectedBoundary} onClose={() => setSelectedBoundary(null)} />
+          </div>
+        </div>
+      )}
+
+      {selectedConnection && currentView === 'diagram' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="max-w-md w-full mx-4">
+            <ConnectionControlsPanel connection={selectedConnection} onClose={() => setSelectedConnection(null)} />
           </div>
         </div>
       )}
