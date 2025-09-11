@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Shield, 
   Server, 
@@ -24,7 +24,12 @@ import {
   Cpu,
   Settings,
   Users,
-  Key
+  Key,
+  Play,
+  Pause,
+  RotateCcw,
+  Clock,
+  Activity
 } from 'lucide-react';
 
 export default function ThreatPathDemo() {
@@ -39,6 +44,13 @@ export default function ThreatPathDemo() {
   const [selectedThreatActor, setSelectedThreatActor] = useState('apt29');
   const [showNodePalette, setShowNodePalette] = useState(false);
   const [selectedBoundary, setSelectedBoundary] = useState(null);
+
+  // Animation state
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [animationProgress, setAnimationProgress] = useState(0);
+  const [showKillChain, setShowKillChain] = useState(true);
+  const animationRef = useRef(null);
 
   const [connections, setConnections] = useState([
   { id: 1, from: 1, to: 2, type: 'solid' },
@@ -101,28 +113,44 @@ export default function ThreatPathDemo() {
     apt29: {
       name: "APT29 (Cozy Bear)",
       description: "Russian state-sponsored group targeting cloud infrastructure",
+      killChain: [
+        { phase: "Reconnaissance", description: "Target identification and research", color: "#3b82f6" },
+        { phase: "Initial Access", description: "Exploit public-facing applications", color: "#8b5cf6" },
+        { phase: "Persistence", description: "Establish foothold in cloud environment", color: "#f59e0b" },
+        { phase: "Privilege Escalation", description: "Container escape to Kubernetes", color: "#ef4444" },
+        { phase: "Collection", description: "Access customer database", color: "#10b981" },
+        { phase: "Exfiltration", description: "Data theft via encrypted channels", color: "#6b7280" }
+      ],
       attackPaths: [{
         id: 1,
         name: "Cloud → Container → Data Exfiltration",
         steps: [
-          { from: 1, to: 6, ttp: "T1190: Exploit Public-Facing Application", risk: "high", description: "Attack cloud services directly" },
-          { from: 6, to: 7, ttp: "T1611: Escape to Host", risk: "high", description: "Container escape to Kubernetes" },
-          { from: 7, to: 4, ttp: "T1005: Data from Local System", risk: "medium", description: "Access customer database" },
-          { from: 8, to: 5, ttp: "T1566.002: Spearphishing Link", risk: "high", description: "Mobile phishing attack" }
+          { from: 1, to: 6, ttp: "T1190: Exploit Public-Facing Application", risk: "high", description: "Attack cloud services directly", phase: "Initial Access" },
+          { from: 6, to: 7, ttp: "T1611: Escape to Host", risk: "high", description: "Container escape to Kubernetes", phase: "Privilege Escalation" },
+          { from: 7, to: 4, ttp: "T1005: Data from Local System", risk: "medium", description: "Access customer database", phase: "Collection" },
+          { from: 8, to: 5, ttp: "T1566.002: Spearphishing Link", risk: "high", description: "Mobile phishing attack", phase: "Initial Access" }
         ]
       }]
     },
     apt1: {
       name: "APT1 (Comment Crew)", 
       description: "Chinese military unit specializing in IoT and infrastructure attacks",
+      killChain: [
+        { phase: "Reconnaissance", description: "IoT device enumeration", color: "#3b82f6" },
+        { phase: "Weaponization", description: "IoT exploit development", color: "#8b5cf6" },
+        { phase: "Delivery", description: "Physical device compromise", color: "#f59e0b" },
+        { phase: "Installation", description: "Persistent access on endpoint", color: "#ef4444" },
+        { phase: "Command & Control", description: "Lateral movement to servers", color: "#10b981" },
+        { phase: "Actions on Objectives", description: "Cloud credential abuse", color: "#6b7280" }
+      ],
       attackPaths: [{
         id: 2,
         name: "IoT → Network Pivot → Cloud Compromise",
         steps: [
-          { from: 9, to: 5, ttp: "T1200: Hardware Additions", risk: "medium", description: "Compromise IoT device" },
-          { from: 5, to: 3, ttp: "T1021: Remote Services", risk: "medium", description: "Lateral movement to servers" },
-          { from: 3, to: 6, ttp: "T1078.004: Cloud Accounts", risk: "high", description: "Abuse cloud credentials" },
-          { from: 6, to: 10, ttp: "T1530: Data from Cloud Storage", risk: "high", description: "Access cloud storage" }
+          { from: 9, to: 5, ttp: "T1200: Hardware Additions", risk: "medium", description: "Compromise IoT device", phase: "Delivery" },
+          { from: 5, to: 3, ttp: "T1021: Remote Services", risk: "medium", description: "Lateral movement to servers", phase: "Command & Control" },
+          { from: 3, to: 6, ttp: "T1078.004: Cloud Accounts", risk: "high", description: "Abuse cloud credentials", phase: "Actions on Objectives" },
+          { from: 6, to: 10, ttp: "T1530: Data from Cloud Storage", risk: "high", description: "Access cloud storage", phase: "Actions on Objectives" }
         ]
       }]
     }
@@ -149,10 +177,77 @@ export default function ThreatPathDemo() {
     network: Wifi
   };
 
+  // Animation functions
+  const startAnimation = () => {
+    setIsAnimating(true);
+    setCurrentStep(0);
+    setAnimationProgress(0);
+    
+    const currentAttackPath = threatActors[selectedThreatActor].attackPaths[0];
+    const totalSteps = currentAttackPath.steps.length;
+    const stepDuration = 3000; // 3 seconds per step
+    
+    let step = 0;
+    
+    const animate = () => {
+      if (step < totalSteps) {
+        setCurrentStep(step);
+        
+        // Animate progress within current step
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+          progress += 2; // 2% every 60ms = ~3 seconds total
+          setAnimationProgress(progress);
+          
+          if (progress >= 100) {
+            clearInterval(progressInterval);
+            step++;
+            setTimeout(() => {
+              if (step < totalSteps) {
+                animate();
+              } else {
+                setIsAnimating(false);
+                setCurrentStep(0);
+                setAnimationProgress(0);
+              }
+            }, 500); // Pause between steps
+          }
+        }, 60);
+        
+        animationRef.current = progressInterval;
+      }
+    };
+    
+    animate();
+  };
+
+  const stopAnimation = () => {
+    setIsAnimating(false);
+    setCurrentStep(0);
+    setAnimationProgress(0);
+    if (animationRef.current) {
+      clearInterval(animationRef.current);
+    }
+  };
+
+  const pauseAnimation = () => {
+    setIsAnimating(false);
+    if (animationRef.current) {
+      clearInterval(animationRef.current);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        clearInterval(animationRef.current);
+      }
+    };
+  }, []);
+
   const handleLogin = (email, password) => {
     setCurrentUser({ name: email.split('@')[0], email });
     setIsAuthenticated(true);
-    // Note: localStorage removed for Claude.ai compatibility
     setSavedDiagrams([]);
   };
 
@@ -161,6 +256,7 @@ export default function ThreatPathDemo() {
     setCurrentDiagramName('New Network');
     setSelectedNode(null);
     setSelectedBoundary(null);
+    stopAnimation();
   };
 
   const addNode = (nodeType, label) => {
@@ -203,6 +299,7 @@ export default function ThreatPathDemo() {
     setSelectedThreatActor(diagram.threatActor || 'apt29');
     setCurrentDiagramName(diagram.name);
     setShowLoadDialog(false);
+    stopAnimation();
   };
 
   const getBorderColor = (color) => {
@@ -481,6 +578,8 @@ export default function ThreatPathDemo() {
 
   const NodeComponent = ({ node }) => {
     const IconComponent = nodeIcons[node.type] || Server;
+    const isCurrentTarget = isAnimating && threatActors[selectedThreatActor].attackPaths[0].steps[currentStep]?.to === node.id;
+    const isCurrentSource = isAnimating && threatActors[selectedThreatActor].attackPaths[0].steps[currentStep]?.from === node.id;
     
     const handleMouseDown = (e) => {
       e.preventDefault();
@@ -519,7 +618,6 @@ export default function ThreatPathDemo() {
         if (!hasMoved) {
           if (isConnecting) {
             if (connectionStart) {
-              // Create new connection
               const newConnection = {
                 id: Date.now(),
                 from: connectionStart.id,
@@ -546,27 +644,211 @@ export default function ThreatPathDemo() {
     
     return (
       <div
-        className={`absolute transform -translate-x-1/2 -translate-y-1/2 ${
+        className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-500 ${
           selectedNode?.id === node.id ? 'ring-2 ring-orange-500' : ''
-        }`}
-        style={{ left: node.x, top: node.y }}
+        } ${isCurrentTarget ? 'ring-4 ring-red-500 ring-pulse' : ''}
+        ${isCurrentSource ? 'ring-4 ring-blue-500 ring-pulse' : ''}`}
+        style={{ 
+          left: node.x, 
+          top: node.y,
+          transform: `translate(-50%, -50%) ${isCurrentTarget || isCurrentSource ? 'scale(1.1)' : 'scale(1)'}`
+        }}
       >
-        <div className="bg-white rounded-lg shadow-lg border-2 border-gray-300 hover:border-orange-400 min-w-20 text-center">
+        <div className={`bg-white rounded-lg shadow-lg border-2 ${
+          isCurrentTarget ? 'border-red-500 bg-red-50' : 
+          isCurrentSource ? 'border-blue-500 bg-blue-50' : 
+          'border-gray-300 hover:border-orange-400'
+        } min-w-20 text-center`}>
           <div 
-            className="bg-gray-100 rounded-t-md px-2 py-1 text-xs text-gray-600 font-medium border-b select-none cursor-move"
+            className={`${
+              isCurrentTarget ? 'bg-red-100' : 
+              isCurrentSource ? 'bg-blue-100' : 
+              'bg-gray-100'
+            } rounded-t-md px-2 py-1 text-xs text-gray-600 font-medium border-b select-none cursor-move`}
             onMouseDown={handleMouseDown}
           >
             ⋮⋮ {node.label}
           </div>
           
           <div className="p-2">
-            <IconComponent className="w-6 h-6 mx-auto mb-1 text-gray-700" />
+            <IconComponent className={`w-6 h-6 mx-auto mb-1 ${
+              isCurrentTarget ? 'text-red-600' : 
+              isCurrentSource ? 'text-blue-600' : 
+              'text-gray-700'
+            }`} />
             {node.controls?.length > 0 && (
               <div className="flex justify-center">
                 <Lock className="w-3 h-3 text-green-600" />
                 <span className="text-xs text-green-600 ml-1">{node.controls.length}</span>
               </div>
             )}
+          </div>
+        </div>
+        
+        {(isCurrentTarget || isCurrentSource) && (
+          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
+            <div className={`px-2 py-1 rounded text-xs font-semibold text-white ${
+              isCurrentTarget ? 'bg-red-600' : 'bg-blue-600'
+            }`}>
+              {isCurrentTarget ? 'TARGET' : 'SOURCE'}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const AnimatedAttackPath = () => {
+    if (!isAnimating || currentView !== 'diagram') return null;
+    
+    const currentAttackPath = threatActors[selectedThreatActor].attackPaths[0];
+    const currentStepData = currentAttackPath.steps[currentStep];
+    
+    if (!currentStepData) return null;
+    
+    const fromNode = nodes.find(n => n.id === currentStepData.from);
+    const toNode = nodes.find(n => n.id === currentStepData.to);
+    
+    if (!fromNode || !toNode) return null;
+    
+    const pathLength = Math.sqrt(
+      Math.pow(toNode.x - fromNode.x, 2) + Math.pow(toNode.y - fromNode.y, 2)
+    );
+    
+    return (
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
+        <defs>
+          <marker
+            id="attack-arrowhead"
+            markerWidth="10"
+            markerHeight="7"
+            refX="9"
+            refY="3.5"
+            orient="auto"
+          >
+            <polygon
+              points="0 0, 10 3.5, 0 7"
+              fill="#dc2626"
+            />
+          </marker>
+        </defs>
+        
+        <line
+          x1={fromNode.x}
+          y1={fromNode.y}
+          x2={toNode.x}
+          y2={toNode.y}
+          stroke="#dc2626"
+          strokeWidth="4"
+          strokeDasharray={`${pathLength * (animationProgress / 100)}, ${pathLength}`}
+          markerEnd="url(#attack-arrowhead)"
+          className="animate-pulse"
+        />
+        
+        {/* Attack step info bubble */}
+        <foreignObject 
+          x={fromNode.x + (toNode.x - fromNode.x) * 0.5 - 100} 
+          y={fromNode.y + (toNode.y - fromNode.y) * 0.5 - 40} 
+          width="200" 
+          height="80"
+        >
+          <div className="bg-red-600 text-white p-2 rounded-lg shadow-lg text-xs">
+            <div className="font-semibold">{currentStepData.ttp}</div>
+            <div className="text-red-100">{currentStepData.description}</div>
+            <div className="mt-1 bg-red-700 rounded-full h-1">
+              <div 
+                className="bg-white h-1 rounded-full transition-all duration-100"
+                style={{ width: `${animationProgress}%` }}
+              ></div>
+            </div>
+          </div>
+        </foreignObject>
+      </svg>
+    );
+  };
+
+  const KillChainTimeline = () => {
+    if (!showKillChain || currentView !== 'diagram') return null;
+    
+    const currentThreatActor = threatActors[selectedThreatActor];
+    const currentAttackPath = currentThreatActor.attackPaths[0];
+    const currentPhase = isAnimating && currentStep < currentAttackPath.steps.length ? 
+      currentAttackPath.steps[currentStep].phase : null;
+    
+    return (
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-40">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-2 text-gray-600" />
+              <h3 className="text-sm font-semibold">Kill Chain Timeline - {currentThreatActor.name}</h3>
+            </div>
+            <div className="flex items-center space-x-2">
+              {!isAnimating && (
+                <button
+                  onClick={startAnimation}
+                  className="flex items-center px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                >
+                  <Play className="w-3 h-3 mr-1" />
+                  Simulate Attack
+                </button>
+              )}
+              {isAnimating && (
+                <button
+                  onClick={pauseAnimation}
+                  className="flex items-center px-3 py-1 bg-orange-600 text-white rounded text-sm hover:bg-orange-700"
+                >
+                  <Pause className="w-3 h-3 mr-1" />
+                  Pause
+                </button>
+              )}
+              <button
+                onClick={stopAnimation}
+                className="flex items-center px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
+              >
+                <RotateCcw className="w-3 h-3 mr-1" />
+                Reset
+              </button>
+              <button
+                onClick={() => setShowKillChain(false)}
+                className="text-gray-500 hover:text-gray-700 text-lg"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex space-x-2 overflow-x-auto">
+            {currentThreatActor.killChain.map((phase, index) => {
+              const isActive = currentPhase === phase.phase;
+              const isCompleted = isAnimating && currentStep > 0 && 
+                currentAttackPath.steps.slice(0, currentStep).some(step => step.phase === phase.phase);
+              
+              return (
+                <div
+                  key={index}
+                  className={`flex-shrink-0 p-2 rounded border-2 min-w-32 text-center transition-all duration-300 ${
+                    isActive ? 'border-red-500 bg-red-50' : 
+                    isCompleted ? 'border-green-500 bg-green-50' : 
+                    'border-gray-300 bg-gray-50'
+                  }`}
+                >
+                  <div className={`text-xs font-semibold ${
+                    isActive ? 'text-red-700' : 
+                    isCompleted ? 'text-green-700' : 
+                    'text-gray-700'
+                  }`}>
+                    {phase.phase}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">{phase.description}</div>
+                  {isActive && (
+                    <div className="mt-1">
+                      <Activity className="w-3 h-3 mx-auto text-red-600 animate-pulse" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -984,7 +1266,7 @@ export default function ThreatPathDemo() {
             <div className="p-4 border-b flex justify-between items-center" style={{ minWidth: '1400px' }}>
               <div>
                 <h2 className="text-xl font-semibold">Advanced Network Architecture</h2>
-                <p className="text-gray-600">Drag nodes/boundaries • Click to configure • Interactive trust zones</p>
+                <p className="text-gray-600">Drag nodes/boundaries • Click to configure • Interactive attack simulation</p>
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -1007,7 +1289,7 @@ export default function ThreatPathDemo() {
               </div>
             </div>
             
-            <div className="relative h-[1000px] w-full bg-gray-50 diagram-area" style={{ minWidth: '1400px' }}
+            <div className="relative h-[1000px] w-full bg-gray-50 diagram-area" style={{ minWidth: '1400px', paddingBottom: showKillChain ? '140px' : '0px' }}
                  onClick={() => {
                    setSelectedNode(null);
                    setSelectedBoundary(null);
@@ -1047,6 +1329,8 @@ export default function ThreatPathDemo() {
                 })}
               </svg>
 
+              <AnimatedAttackPath />
+
               {nodes.map(node => (
                 <NodeComponent key={node.id} node={node} />
               ))}
@@ -1072,6 +1356,8 @@ export default function ThreatPathDemo() {
 
         {currentView === 'attacks' && <AttackPathView />}
       </div>
+
+      <KillChainTimeline />
 
       {showNodePalette && <NodePalette />}
       
