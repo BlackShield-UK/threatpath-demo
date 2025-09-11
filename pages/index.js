@@ -491,7 +491,7 @@ export default function ThreatPathDemo() {
           n.id === node.id 
             ? { 
                 ...n, 
-                x: Math.max(25, Math.min(1000, newX)), 
+                x: Math.max(25, Math.min(1200, newX)), 
                 y: Math.max(25, Math.min(1000, newY)) 
               }
             : n
