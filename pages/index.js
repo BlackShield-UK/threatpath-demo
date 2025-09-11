@@ -385,7 +385,7 @@ export default function ThreatPathDemo() {
           if (action === 'move') {
             return {
               ...b,
-              x: Math.max(10, Math.min(1200 - b.width, startBoundary.x + deltaX)),
+              x: Math.max(5, Math.min(1200 - b.width, startBoundary.x + deltaX)),
               y: Math.max(10, Math.min(1000 - b.height, startBoundary.y + deltaY))
             };
           } else if (action === 'resize') {
@@ -491,7 +491,7 @@ export default function ThreatPathDemo() {
           n.id === node.id 
             ? { 
                 ...n, 
-                x: Math.max(25, Math.min(1200, newX)), 
+                x: Math.max(5, Math.min(1200, newX)), 
                 y: Math.max(25, Math.min(1000, newY)) 
               }
             : n
@@ -891,7 +891,7 @@ export default function ThreatPathDemo() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-none mx-auto p-6" style={{ maxWidth: '1400px' }}>
         {currentView === 'diagram' && (
           <div className="bg-white rounded-lg shadow">
             <div className="p-4 border-b flex justify-between items-center">
