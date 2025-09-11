@@ -516,9 +516,31 @@ export default function ThreatPathDemo() {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
         
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        
         if (!hasMoved) {
-          setSelectedNode(node);
-          setSelectedBoundary(null);
+          if (isConnecting) {
+            if (connectionStart) {
+              // Create new connection
+              const newConnection = {
+                id: Date.now(),
+                from: connectionStart.id,
+                to: node.id,
+                type: 'solid'
+              };
+              setConnections([...connections, newConnection]);
+              setConnectionStart(null);
+              setIsConnecting(false);
+            } else {
+              setConnectionStart(node);
+            }
+          } else {
+            setSelectedNode(node);
+            setSelectedBoundary(null);
+            setSelectedConnection(null);
+          }
         }
       };
       
