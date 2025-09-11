@@ -913,12 +913,25 @@ export default function ThreatPathDemo() {
                 <h2 className="text-xl font-semibold">Advanced Network Architecture</h2>
                 <p className="text-gray-600">Drag nodes/boundaries • Click to configure • Interactive trust zones</p>
               </div>
-              <button
-                onClick={() => setShowNodePalette(true)}
-                className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition-colors font-medium"
-              >
-                Add Component
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    setIsConnecting(!isConnecting);
+                    setConnectionStart(null);
+                  }}
+                  className={`px-3 py-2 rounded text-sm transition-colors mr-2 ${
+                    isConnecting ? 'bg-orange-500 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'
+                  }`}
+                >
+                  {isConnecting ? 'Exit Connect' : 'Connect Nodes'}
+                </button>          
+                <button
+                  onClick={() => setShowNodePalette(true)}
+                  className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition-colors font-medium"
+                >
+                  Add Component
+                </button>
+              </div>
             </div>
             
             <div className="relative h-[1000px] w-full bg-gray-50 diagram-area" style={{ minWidth: '1400px' }}
