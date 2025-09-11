@@ -39,6 +39,20 @@ export default function ThreatPathDemo() {
   const [selectedThreatActor, setSelectedThreatActor] = useState('apt29');
   const [showNodePalette, setShowNodePalette] = useState(false);
   const [selectedBoundary, setSelectedBoundary] = useState(null);
+
+  const [connections, setConnections] = useState([
+  { id: 1, from: 1, to: 2, type: 'solid' },
+  { id: 2, from: 2, to: 3, type: 'solid' },
+  { id: 3, from: 3, to: 4, type: 'solid' },
+  { id: 4, from: 3, to: 6, type: 'dashed' },
+  { id: 5, from: 5, to: 2, type: 'solid' },
+  { id: 6, from: 6, to: 7, type: 'solid' },
+  { id: 7, from: 6, to: 10, type: 'solid' },
+  { id: 8, from: 8, to: 5, type: 'dotted' }
+  ]);
+  const [selectedConnection, setSelectedConnection] = useState(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionStart, setConnectionStart] = useState(null);
   
   const [boundaries, setBoundaries] = useState([
     {
@@ -918,14 +932,32 @@ export default function ThreatPathDemo() {
               ))}
               
               <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 5 }}>
-                <line x1="150" y1="100" x2="200" y2="100" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="300" y1="100" x2="350" y2="100" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="450" y1="100" x2="500" y2="100" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="450" y1="100" x2="650" y2="80" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
-                <line x1="280" y1="130" x2="280" y2="180" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="700" y1="80" x2="750" y2="130" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="700" y1="80" x2="650" y2="180" stroke="#94a3b8" strokeWidth="2" />
-                <line x1="200" y1="230" x2="250" y2="180" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3,3" />
+                {connections.map(connection => {
+                  const fromNode = nodes.find(n => n.id === connection.from);
+                  const toNode = nodes.find(n => n.id === connection.to);
+                  if (!fromNode || !toNode) return null;
+                  
+                  const strokeDasharray = connection.type === 'dashed' ? '5,5' : 
+                                         connection.type === 'dotted' ? '3,3' : 'none';
+                  
+                  return (
+                    <line
+                      key={connection.id}
+                      x1={fromNode.x}
+                      y1={fromNode.y}
+                      x2={toNode.x}
+                      y2={toNode.y}
+                      stroke={selectedConnection?.id === connection.id ? "#f97316" : "#94a3b8"}
+                      strokeWidth={selectedConnection?.id === connection.id ? "3" : "2"}
+                      strokeDasharray={strokeDasharray}
+                      className="pointer-events-auto cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedConnection(connection);
+                      }}
+                    />
+                  );
+                })}
               </svg>
 
               {nodes.map(node => (
