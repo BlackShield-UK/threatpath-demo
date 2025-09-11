@@ -894,7 +894,7 @@ export default function ThreatPathDemo() {
       <div className="max-w-none mx-auto p-6" style={{ maxWidth: '1400px' }}>
         {currentView === 'diagram' && (
           <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b flex justify-between items-center" style={{ marginLeft: '-50px', minWidth: '1200px' }}>
+            <div className="p-4 border-b flex justify-between items-center" style={{ marginLeft: '-50px', minWidth: '1400px' }}>
               <div>
                 <h2 className="text-xl font-semibold">Advanced Network Architecture</h2>
                 <p className="text-gray-600">Drag nodes/boundaries • Click to configure • Interactive trust zones</p>
