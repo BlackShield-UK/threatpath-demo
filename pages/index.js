@@ -907,7 +907,7 @@ export default function ThreatPathDemo() {
               </button>
             </div>
             
-            <div className="relative h-[600px] bg-gray-50 diagram-area"
+            <div className="relative h-[600px] w-full bg-gray-50 diagram-area" style={{ minWidth: '1200px' }}
                  onClick={() => {
                    setSelectedNode(null);
                    setSelectedBoundary(null);
