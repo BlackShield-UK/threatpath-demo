@@ -1252,6 +1252,17 @@ export default function ThreatPathDemo() {
               >
                 Attacks
               </button>
+              {currentView === 'diagram' && (
+                <button
+                  onClick={() => setShowKillChain(!showKillChain)}
+                  className={`px-3 py-2 rounded text-sm transition-colors ${
+                    showKillChain ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-600 text-white hover:bg-gray-500'
+                  }`}
+                >
+                  <Clock className="w-4 h-4 inline mr-1" />
+                  Kill Chain
+                </button>
+              )}
               <button onClick={() => setIsAuthenticated(false)} className="px-3 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors">
                 Logout
               </button>
@@ -1359,6 +1370,7 @@ export default function ThreatPathDemo() {
 
       <KillChainTimeline />
 
+      {showTechniqueSearch && <TechniqueSearch />}
       {showNodePalette && <NodePalette />}
       
       {selectedNode && currentView === 'diagram' && (
